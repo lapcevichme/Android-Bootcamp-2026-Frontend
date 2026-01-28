@@ -158,3 +158,6 @@
     * Реализовать отображение индикаторов на датах, где есть встречи.
     * Связать клик по дате с обновлением списка снизу (LazyColumn).
 * [ ] Реализовать выбор участников встречи (поиск по сотрудникам).
+
+## Figma
+https://www.figma.com/design/1ZDjwOwZmMIEIGKfPLAQJY/NTO-BOOTCAMP?node-id=0-1&p=f&t=gvER6sJCe36UwzSS-0
