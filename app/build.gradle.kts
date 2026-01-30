@@ -39,7 +39,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -62,6 +61,7 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.material.icons)
     implementation(libs.material.icons.extended)
+    implementation(libs.kizitonwose.calendar)
 }
 
 
