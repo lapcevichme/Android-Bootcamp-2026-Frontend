@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.compose.AppTheme
 import com.teto.planner.domain.model.Meeting
 import com.teto.planner.presentation.common.SharedCalendar
 import java.time.LocalDate
@@ -109,7 +110,7 @@ fun ScheduleScreen(
 
 @Composable
 fun TaskCard() {
-    Card(modifier = Modifier.background(color = MaterialTheme.colorScheme.surfaceContainer)) {
+    Card{
         Row(modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
@@ -144,7 +145,7 @@ fun TaskCard() {
 @Preview
 @Composable
 fun ScheduleScreenPreview() {
-    MaterialTheme{
+    AppTheme{
         ScheduleScreen(
             onCreateMeeting = {},
             onProfileClick = {}
@@ -155,7 +156,7 @@ fun ScheduleScreenPreview() {
 @Preview
 @Composable
 fun TaskCardPreview() {
-    MaterialTheme{
+    AppTheme{
         TaskCard()
     }
 }
