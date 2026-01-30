@@ -72,7 +72,7 @@ fun SharedCalendar(
             Text(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp),
+                    .padding(vertical = 8.dp),
                 text = "${
                     month.yearMonth.month.getDisplayName(
                         TextStyle.FULL_STANDALONE,
@@ -81,7 +81,7 @@ fun SharedCalendar(
                         .replaceFirstChar { it.uppercase() }
                 } ${month.yearMonth.year}",
                 textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
@@ -144,7 +144,7 @@ private fun DaysOfWeekTitle(daysOfWeek: List<DayOfWeek>) {
                 text = dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.forLanguageTag("ru"))
                     .uppercase(),
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

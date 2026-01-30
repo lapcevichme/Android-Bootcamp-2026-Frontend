@@ -52,18 +52,15 @@ fun MainApp() {
     Scaffold(
         bottomBar = {
             if (isBottomBarVisible) {
-                NavigationBar {
-                    MyBottomNavigationBar(
-                        navController = navController,
-                        currentDestination = currentDestination
-                    )
-                }
+                MyBottomNavigationBar(
+                    navController = navController,
+                    currentDestination = currentDestination
+                )
             }
         }
-    ) { innerPadding ->
+    ) {
         AppNavHost(
-            navController = navController,
-            modifier = Modifier.padding(innerPadding)
+            navController = navController
         )
     }
 }
