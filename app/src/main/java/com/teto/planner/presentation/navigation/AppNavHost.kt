@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -20,6 +19,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.teto.planner.presentation.features.auth.login.LoginScreen
 import com.teto.planner.presentation.features.auth.register.RegisterScreen
+import com.teto.planner.presentation.features.schedule.ScheduleScreen
 
 @Composable
 fun AppNavHost(
@@ -58,14 +58,10 @@ fun AppNavHost(
         }
 
         composable(Screen.Schedule.route) {
-            TestScreenLayout(title = "Мое расписание") {
-                Button(onClick = { navController.navigate(Screen.MeetingCreate.route) }) {
-                    Text("Создать встречу (+)")
-                }
-                OutlinedButton(onClick = { navController.navigate(Screen.Profile.route) }) {
-                    Text("Перейти в профиль")
-                }
-            }
+            ScheduleScreen(
+                onCreateMeeting = { navController.navigate(Screen.MeetingCreate.route) },
+                onProfileClick = { navController.navigate(Screen.Profile.route) }
+            )
         }
 
         composable(Screen.Invitations.route) {

@@ -16,10 +16,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,21 +38,33 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ScheduleScreen() {
+fun ScheduleScreen(
+    onCreateMeeting: () -> Unit,
+    onProfileClick: () -> Unit
+) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Мое расписание",
                     color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.titleLarge) },
-                actions = { IconButton(onClick = {}) {
+                actions = { IconButton(onClick = { onProfileClick() }) {
                     Icon(
                         contentDescription = "Profile",
                         imageVector = Icons.Default.Person
-
                     )
                 } }
-        )}
+        )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = onCreateMeeting) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Create Meeting",
+                    modifier = Modifier
+                )
+            }
+        }
     ) { innerPadding ->
         Surface(color = MaterialTheme.colorScheme.background) {
             Column(modifier = Modifier.fillMaxSize()) {
@@ -119,7 +133,10 @@ fun TaskCard() {
 @Composable
 fun ScheduleScreenPreview() {
     MaterialTheme{
-        ScheduleScreen()
+        ScheduleScreen(
+            onCreateMeeting = {},
+            onProfileClick = {}
+        )
     }
 }
 
