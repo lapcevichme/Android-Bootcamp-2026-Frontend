@@ -12,6 +12,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,7 +20,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun LoginScreen() {
+fun LoginScreen(
+    onLoginClick: () -> Unit,
+    onRegisterClick: () -> Unit
+) {
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -63,10 +67,15 @@ fun LoginScreen() {
                 modifier = Modifier.fillMaxWidth().padding(
                     start = 32.dp,
                     end = 32.dp,
-                    top = 24.dp),
-                onClick = { }
+                    top = 24.dp
+                ),
+                onClick = onLoginClick
             ) {
                 Text("Войти", style = MaterialTheme.typography.labelLarge)
+            }
+
+            TextButton(onClick = onRegisterClick) {
+                Text("Нет аккаунта? Зарегистрироваться")
             }
         }
     }
@@ -77,6 +86,9 @@ fun LoginScreen() {
 @Composable
 fun RegisterScreenPreview() {
     MaterialTheme {
-        LoginScreen()
+        LoginScreen(
+            onLoginClick = {},
+            onRegisterClick = {}
+        )
     }
 }
