@@ -1,4 +1,4 @@
-package ru.sicampus.bootcamp2026
+package com.teto.planner
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("ru.sicampus.bootcamp2026", appContext.packageName)
+        assertEquals("com.sicampus.planner", appContext.packageName)
     }
 }

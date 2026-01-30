@@ -1,6 +1,5 @@
-package ru.sicampus.bootcamp2026.ui.theme
+package com.teto.planner.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

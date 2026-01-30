@@ -1,4 +1,4 @@
-package ru.sicampus.bootcamp2026
+package com.teto.planner
 
 import org.junit.Test
 

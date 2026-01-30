@@ -1,4 +1,4 @@
-package ru.sicampus.bootcamp2026.ui.theme
+package com.teto.planner.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
