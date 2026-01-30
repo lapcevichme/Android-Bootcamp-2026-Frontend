@@ -1,4 +1,4 @@
-package com.teto.planner.ui.theme
+package com.teto.planner.presentation.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

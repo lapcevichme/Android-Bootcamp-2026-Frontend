@@ -11,7 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.teto.planner.ui.theme.AndroidBootcamp2026FrontendTheme
+import com.teto.planner.presentation.theme.AndroidBootcamp2026FrontendTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
