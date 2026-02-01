@@ -1,6 +1,5 @@
 package com.teto.planner.presentation.features.schedule
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
