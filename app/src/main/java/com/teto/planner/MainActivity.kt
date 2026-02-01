@@ -59,9 +59,10 @@ fun MainApp() {
                 )
             }
         }
-    ) {
+    ) { innerPadding ->
         AppNavHost(
-            navController = navController
+            navController = navController,
+            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
         )
     }
 }

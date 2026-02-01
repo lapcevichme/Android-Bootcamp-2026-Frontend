@@ -65,7 +65,7 @@ fun ScheduleScreen(
             }
         }
     ) { innerPadding ->
-        Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.padding(innerPadding)) {
+        Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.padding(top = innerPadding.calculateTopPadding(), bottom = 0.dp)) {
             Column(modifier = Modifier.fillMaxSize()) {
 
                 Box(contentAlignment = Alignment.Center) {

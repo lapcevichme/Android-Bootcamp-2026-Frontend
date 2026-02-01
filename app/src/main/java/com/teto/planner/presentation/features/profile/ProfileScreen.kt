@@ -56,9 +56,9 @@ fun ProfileScreen() {
         }
     ) { innerPadding ->
         Surface(modifier = Modifier.fillMaxSize().padding(innerPadding), color = MaterialTheme.colorScheme.background) {
-            Column(modifier = Modifier.fillMaxSize(),
+            Column(modifier = Modifier.fillMaxSize().padding(top = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(40.dp, alignment = Alignment.CenterVertically)) {
+                verticalArrangement = Arrangement.spacedBy(40.dp, alignment = Alignment.Top)) {
                 IconButton(onClick = {}, modifier = Modifier.size(120.dp)) {
                     Box(modifier = Modifier
                         .size(120.dp)
