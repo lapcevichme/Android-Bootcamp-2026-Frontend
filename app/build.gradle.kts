@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -62,6 +63,7 @@ dependencies {
     implementation(libs.material.icons)
     implementation(libs.material.icons.extended)
     implementation(libs.kizitonwose.calendar)
+    implementation(libs.bundles.ktor.client)
 }
 
 
