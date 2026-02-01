@@ -1,4 +1,5 @@
-package com.example.compose
+package com.teto.planner.presentation.theme
+
 import androidx.compose.ui.graphics.Color
 
 val primaryLight = Color(0xFF33618D)

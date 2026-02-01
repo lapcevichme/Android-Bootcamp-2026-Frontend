@@ -19,6 +19,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.teto.planner.presentation.features.auth.login.LoginScreen
 import com.teto.planner.presentation.features.auth.register.RegisterScreen
+import com.teto.planner.presentation.features.profile.ProfileScreen
 import com.teto.planner.presentation.features.schedule.ScheduleScreen
 
 @Composable
@@ -71,18 +72,15 @@ fun AppNavHost(
         }
 
         composable(Screen.Profile.route) {
-            TestScreenLayout(title = "Личный профиль") {
-                Button(onClick = {
+            ProfileScreen(
+                onSave = { navController.popBackStack() },
+                onEdit = {},
+                onExit = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
-                }) {
-                    Text("Выйти из аккаунта")
                 }
-                TextButton(onClick = { navController.popBackStack() }) {
-                    Text("Назад")
-                }
-            }
+            )
         }
 
         composable(Screen.MeetingCreate.route) {
