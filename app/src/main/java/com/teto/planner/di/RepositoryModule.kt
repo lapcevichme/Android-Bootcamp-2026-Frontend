@@ -1,8 +1,9 @@
 package com.teto.planner.di
 
-import com.teto.planner.data.repository.MeetingRepositoryImpl
 import com.teto.planner.data.repository.MockMeetingRepository
+import com.teto.planner.data.repository.MockUserRepository
 import com.teto.planner.domain.repository.MeetingRepository
+import com.teto.planner.domain.repository.UserRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -18,4 +19,10 @@ abstract class RepositoryModule {
     abstract fun bindMeetingRepository(
         impl: MockMeetingRepository
     ): MeetingRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindUserRepository(
+        impl: MockUserRepository
+    ): UserRepository
 }
