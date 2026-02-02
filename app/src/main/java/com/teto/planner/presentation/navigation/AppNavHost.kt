@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -61,7 +62,8 @@ fun AppNavHost(
         composable(Screen.Schedule.route) {
             ScheduleScreen(
                 onCreateMeeting = { navController.navigate(Screen.MeetingCreate.route) },
-                onProfileClick = { navController.navigate(Screen.Profile.route) }
+                onProfileClick = { navController.navigate(Screen.Profile.route) },
+                viewModel = hiltViewModel()
             )
         }
 
