@@ -16,7 +16,7 @@ enum class IntersectionSlotStatus {
     DISABLED
 }
 
-data class IntersectionGrid(
+data class IntersectionResponse(
     val date: LocalDate,
     val organizer: UserSummary,
     val users: List<UserSummary>,

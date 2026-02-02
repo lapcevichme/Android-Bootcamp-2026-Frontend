@@ -3,10 +3,7 @@ package com.teto.planner.data.repository
 import com.teto.planner.domain.model.common.PageMeta
 import com.teto.planner.domain.model.common.PagedList
 import com.teto.planner.domain.model.common.Room
-import com.teto.planner.domain.model.meeting.Invitation
-import com.teto.planner.domain.model.meeting.Meeting
-import com.teto.planner.domain.model.meeting.MeetingParticipant
-import com.teto.planner.domain.model.meeting.MeetingStatus
+import com.teto.planner.domain.model.meeting.*
 import com.teto.planner.domain.model.user.LoadStatus
 import com.teto.planner.domain.model.user.ParticipantStatus
 import com.teto.planner.domain.model.user.UserSummary
@@ -26,6 +23,12 @@ class MockMeetingRepository @Inject constructor() : MeetingRepository {
         avatarUrl = null,
         busyHours = 4,
         loadStatus = LoadStatus.MEDIUM
+    )
+
+    private val otherUsers = listOf(
+        UserSummary("user-2", "Анна Сидорова", null, 2, LoadStatus.LOW),
+        UserSummary("user-3", "Сергей Волков", null, 6, LoadStatus.HIGH),
+        UserSummary("user-4", "Мария Кот", null, 0, LoadStatus.LOW)
     )
 
     private val mockRoom = Room(id = "room-1", name = "Переговорка 'Алтай'", capacity = 8)
@@ -54,18 +57,6 @@ class MockMeetingRepository @Inject constructor() : MeetingRepository {
             room = mockRoom,
             status = MeetingStatus.SCHEDULED,
             participants = emptyList()
-        ),
-        Meeting(
-            id = "m-3",
-            organizer = mockUser,
-            title = "Кофе-брейк",
-            description = null,
-            date = LocalDate.now().plusDays(1),
-            startTime = LocalTime.of(11, 0),
-            durationHours = 1,
-            room = null,
-            status = MeetingStatus.SCHEDULED,
-            participants = emptyList()
         )
     )
 
@@ -74,23 +65,16 @@ class MockMeetingRepository @Inject constructor() : MeetingRepository {
         endDate: LocalDate,
         includePending: Boolean
     ): Result<PagedList<Meeting>> {
-        delay(1000)
-
+        delay(800)
         val filtered = meetings.filter {
             (it.date.isEqual(startDate) || it.date.isAfter(startDate)) &&
                     (it.date.isEqual(endDate) || it.date.isBefore(endDate))
         }
-
-        return Result.success(
-            PagedList(
-                items = filtered,
-                meta = PageMeta(0, 50, filtered.size)
-            )
-        )
+        return Result.success(PagedList(filtered, PageMeta(0, 50, filtered.size)))
     }
 
     override suspend fun getMeeting(id: String): Result<Meeting> {
-        delay(500)
+        delay(400)
         val meeting = meetings.find { it.id == id }
         return if (meeting != null) Result.success(meeting) else Result.failure(Exception("Not found"))
     }
@@ -104,7 +88,7 @@ class MockMeetingRepository @Inject constructor() : MeetingRepository {
         roomId: String?,
         participantIds: List<String>
     ): Result<Meeting> {
-        delay(1000)
+        delay(1200)
         val newMeeting = Meeting(
             id = java.util.UUID.randomUUID().toString(),
             organizer = mockUser,
@@ -121,6 +105,43 @@ class MockMeetingRepository @Inject constructor() : MeetingRepository {
         return Result.success(newMeeting)
     }
 
+    override suspend fun getIntersection(
+        date: LocalDate,
+        userIds: List<String>
+    ): Result<IntersectionResponse> {
+        delay(1000)
+
+        val slots = (8..20).map { hour ->
+            val status = when {
+                hour % 5 == 0 -> IntersectionSlotStatus.DISABLED
+                hour % 3 == 0 -> IntersectionSlotStatus.YELLOW
+                else -> IntersectionSlotStatus.GREEN
+            }
+
+            val conflicted = if (status == IntersectionSlotStatus.YELLOW) {
+                listOf(otherUsers.random())
+            } else if (status == IntersectionSlotStatus.DISABLED) {
+                otherUsers.take(2)
+            } else emptyList()
+
+            IntersectionSlot(
+                hour = hour,
+                status = status,
+                conflictedUsers = conflicted,
+                label = String.format("%02d:00", hour)
+            )
+        }
+
+        return Result.success(
+            IntersectionResponse(
+                date = date,
+                organizer = mockUser,
+                users = otherUsers.filter { userIds.contains(it.id) },
+                slots = slots
+            )
+        )
+    }
+
     override suspend fun cancelMeeting(id: String): Result<Unit> {
         delay(500)
         meetings.removeIf { it.id == id }
@@ -128,7 +149,7 @@ class MockMeetingRepository @Inject constructor() : MeetingRepository {
     }
 
     override suspend fun listInvitations(status: ParticipantStatus): Result<PagedList<Invitation>> {
-        delay(800)
+        delay(600)
         return Result.success(PagedList(emptyList(), PageMeta(0, 50, 0)))
     }
 
@@ -136,7 +157,7 @@ class MockMeetingRepository @Inject constructor() : MeetingRepository {
         meetingId: String,
         status: ParticipantStatus
     ): Result<MeetingParticipant> {
-        delay(500)
-        return Result.failure(Exception("Not implemented"))
+        delay(400)
+        return Result.failure(Exception("Mock: Response not implemented"))
     }
 }
