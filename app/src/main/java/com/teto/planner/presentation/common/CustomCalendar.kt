@@ -1,7 +1,5 @@
 package com.teto.planner.presentation.common
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -14,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -23,14 +20,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
 import com.kizitonwose.calendar.core.CalendarDay
 import com.kizitonwose.calendar.core.DayPosition
 import com.kizitonwose.calendar.core.firstDayOfWeekFromLocale
-import com.teto.planner.domain.model.Meeting
+import com.teto.planner.domain.model.meeting.Meeting
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -152,7 +148,7 @@ private fun DaysOfWeekTitle(daysOfWeek: List<DayOfWeek>) {
     }
 }
 
-
+/*
 @Preview(showBackground = true, name = "Calendar")
 @Composable
 fun SharedCalendarPreview() {
@@ -176,3 +172,4 @@ fun SharedCalendarPreview() {
         }
     }
 }
+ */
