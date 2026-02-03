@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.teto.planner.domain.model.user.UserSummary
 import com.teto.planner.domain.repository.MeetingRepository
 import com.teto.planner.domain.repository.RoomRepository
-import com.teto.planner.domain.repository.SchedulingRepository
 import com.teto.planner.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -20,7 +19,6 @@ import javax.inject.Inject
 @HiltViewModel
 class MeetingCreateViewModel @Inject constructor(
     private val userRepository: UserRepository,
-    private val schedulingRepository: SchedulingRepository,
     private val roomRepository: RoomRepository,
     private val meetingRepository: MeetingRepository
 ) : ViewModel() {
@@ -40,13 +38,15 @@ class MeetingCreateViewModel @Inject constructor(
                 return@launch
             }
             updateSuccessState { it.copy(isSearching = true) }
-            userRepository.listUsers(query = query).onSuccess { pagedList ->
+            userRepository.listUsers(query = query, page = 0).onSuccess { pagedList ->
                 updateSuccessState { it.copy(
                     searchResults = pagedList.items,
                     searchMeta = pagedList.meta,
                     isSearching = false
                 ) }
-            }.onFailure { updateSuccessState { it.copy(isSearching = false) } }
+            }.onFailure {
+                updateSuccessState { it.copy(isSearching = false) }
+            }
         }
     }
 
@@ -58,28 +58,29 @@ class MeetingCreateViewModel @Inject constructor(
                 searchResults = emptyList()
             )
         }
-        updateIntersectionGrid()
+        updateIntersectionData()
     }
 
     fun onParticipantRemoved(userId: String) {
         updateSuccessState { state ->
             state.copy(selectedParticipants = state.selectedParticipants.filter { it.id != userId })
         }
-        updateIntersectionGrid()
+        updateIntersectionData()
     }
 
-    private fun updateIntersectionGrid() {
+    private fun updateIntersectionData() {
         val state = _uiState.value as? MeetingCreateUiState.Success ?: return
         if (state.selectedParticipants.isEmpty()) {
-            updateSuccessState { it.copy(intersectionGrid = null) }
+            updateSuccessState { it.copy(intersectionResponse = null) }
             return
         }
+
         viewModelScope.launch {
-            schedulingRepository.getIntersectionGrid(
+            meetingRepository.getIntersection(
                 date = state.selectedDate,
                 userIds = state.selectedParticipants.map { it.id }
-            ).onSuccess { grid ->
-                updateSuccessState { it.copy(intersectionGrid = grid) }
+            ).onSuccess { response ->
+                updateSuccessState { it.copy(intersectionResponse = response) }
             }
         }
     }
@@ -92,6 +93,7 @@ class MeetingCreateViewModel @Inject constructor(
     private fun updateAvailableRooms() {
         val state = _uiState.value as? MeetingCreateUiState.Success ?: return
         val hour = state.selectedHour ?: return
+
         updateSuccessState { it.copy(isLoadingRooms = true) }
         viewModelScope.launch {
             roomRepository.listAvailableRooms(
@@ -103,7 +105,9 @@ class MeetingCreateViewModel @Inject constructor(
                     roomsMeta = pagedList.meta,
                     isLoadingRooms = false
                 ) }
-            }.onFailure { updateSuccessState { it.copy(isLoadingRooms = false) } }
+            }.onFailure {
+                updateSuccessState { it.copy(isLoadingRooms = false) }
+            }
         }
     }
 
@@ -122,6 +126,7 @@ class MeetingCreateViewModel @Inject constructor(
     fun onCreateMeeting(onSuccess: () -> Unit) {
         val state = _uiState.value as? MeetingCreateUiState.Success ?: return
         if (!state.canSubmit) return
+
         updateSuccessState { it.copy(isSubmitting = true) }
         viewModelScope.launch {
             meetingRepository.createMeeting(
@@ -132,11 +137,12 @@ class MeetingCreateViewModel @Inject constructor(
                 description = state.description.takeIf { it.isNotBlank() },
                 roomId = state.selectedRoomId,
                 participantIds = state.selectedParticipants.map { it.id }
-            ).onSuccess { onSuccess() }
-                .onFailure { error ->
-                    updateSuccessState { it.copy(isSubmitting = false) }
-                    _uiState.update { MeetingCreateUiState.Error(error.message ?: "Ошибка") }
-                }
+            ).onSuccess {
+                onSuccess()
+            }.onFailure { error ->
+                updateSuccessState { it.copy(isSubmitting = false) }
+                _uiState.update { MeetingCreateUiState.Error(error.message ?: "Ошибка") }
+            }
         }
     }
 

@@ -1,10 +1,8 @@
 package com.teto.planner.presentation.features.meeting_create
 
 import com.teto.planner.domain.model.common.PageMeta
-import com.teto.planner.domain.model.common.PagedList
 import com.teto.planner.domain.model.common.Room
-import com.teto.planner.domain.model.meeting.IntersectionGrid
-import com.teto.planner.domain.model.meeting.Meeting
+import com.teto.planner.domain.model.meeting.IntersectionResponse
 import com.teto.planner.domain.model.user.UserSummary
 import java.time.LocalDate
 
@@ -15,11 +13,12 @@ sealed interface MeetingCreateUiState {
         val searchQuery: String = "",
         val searchResults: List<UserSummary> = emptyList(),
         val searchMeta: PageMeta? = null,
-        val selectedParticipants: List<UserSummary> = emptyList(),
         val isSearching: Boolean = false,
 
+        val selectedParticipants: List<UserSummary> = emptyList(),
+
         val selectedDate: LocalDate = LocalDate.now(),
-        val intersectionGrid: IntersectionGrid? = null,
+        val intersectionResponse: IntersectionResponse? = null,
         val selectedHour: Int? = null,
 
         val availableRooms: List<Room> = emptyList(),
