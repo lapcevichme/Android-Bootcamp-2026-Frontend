@@ -1,9 +1,7 @@
 package com.teto.planner.domain.repository
 
 import com.teto.planner.domain.model.common.PagedList
-import com.teto.planner.domain.model.meeting.Invitation
-import com.teto.planner.domain.model.meeting.Meeting
-import com.teto.planner.domain.model.meeting.MeetingParticipant
+import com.teto.planner.domain.model.meeting.*
 import com.teto.planner.domain.model.user.ParticipantStatus
 import java.time.LocalDate
 
@@ -25,6 +23,11 @@ interface MeetingRepository {
         roomId: String?,
         participantIds: List<String>
     ): Result<Meeting>
+
+    suspend fun getIntersection(
+        date: LocalDate,
+        userIds: List<String>
+    ): Result<IntersectionResponse>
 
     suspend fun cancelMeeting(id: String): Result<Unit>
 
