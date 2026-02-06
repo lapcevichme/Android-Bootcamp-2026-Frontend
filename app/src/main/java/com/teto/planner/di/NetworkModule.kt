@@ -1,23 +1,26 @@
 package com.teto.planner.di
 
+import android.util.Base64
 import android.util.Log
+import com.teto.planner.data.local.CredentialsHolder
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.auth.Auth
-import io.ktor.client.plugins.auth.providers.BasicAuthCredentials
-import io.ktor.client.plugins.auth.providers.basic
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.plugins.plugin
 import io.ktor.client.request.header
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.encodedPath
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import javax.inject.Singleton
@@ -25,11 +28,11 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-    private const val BASE_URL = "http://10.0.2.2:8080/api/"
+    private const val BASE_URL = "https://teto-planner.fly.dev/"
 
     @Provides
     @Singleton
-    fun provideHttpClient(): HttpClient {
+    fun provideHttpClient(credentialsHolder: CredentialsHolder): HttpClient {
         return HttpClient(CIO) {
             install(ContentNegotiation) {
                 json(Json {
@@ -44,15 +47,6 @@ object NetworkModule {
                 header(HttpHeaders.ContentType, ContentType.Application.Json)
             }
 
-            install(Auth) {
-                basic {
-                    credentials {
-                        BasicAuthCredentials(username = "ivan", password = "password")
-                    }
-                    sendWithoutRequest { true }
-                }
-            }
-
             install(HttpTimeout) {
                 requestTimeoutMillis = 15_000
                 connectTimeoutMillis = 15_000
@@ -65,7 +59,21 @@ object NetworkModule {
                         Log.d("Ktor-Network", message)
                     }
                 }
-                level = io.ktor.client.plugins.logging.LogLevel.ALL
+                level = LogLevel.ALL
+            }
+        }.apply {
+            plugin(HttpSend).intercept { request ->
+                if (request.url.encodedPath != "/api/auth/login") {
+                    val creds = credentialsHolder.credentialsFlow.value
+
+                    if (creds != null) {
+                        val authString = "${creds.login}:${creds.pass}"
+                        val encodedAuth = Base64.encodeToString(authString.toByteArray(), Base64.NO_WRAP)
+                        request.header(HttpHeaders.Authorization, "Basic $encodedAuth")
+                    }
+                }
+
+                execute(request)
             }
         }
     }

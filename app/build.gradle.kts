@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.material.icons.extended)
     implementation(libs.kizitonwose.calendar)
     implementation(libs.bundles.ktor.client)
+    implementation(libs.androidx.datastore.preferences)
 }
 
 
