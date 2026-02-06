@@ -44,7 +44,7 @@ fun LoginScreen(
 
     LaunchedEffect(uiState) {
         val state = uiState
-        if (state is LoginUiState.Input) {
+        if (state is LoginUiState.Content) {
             if (state.isLoginSuccessful) {
                 onLoginSuccess()
                 viewModel.resetState()
@@ -66,13 +66,7 @@ fun LoginScreen(
                     }
                 }
 
-                is LoginUiState.Error -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(text = state.message, color = MaterialTheme.colorScheme.error)
-                    }
-                }
-
-                is LoginUiState.Input -> {
+                is LoginUiState.Content -> {
                     LoginContent(
                         state = state,
                         onLoginChange = viewModel::onLoginInputChange,
@@ -88,7 +82,7 @@ fun LoginScreen(
 
 @Composable
 private fun LoginContent(
-    state: LoginUiState.Input,
+    state: LoginUiState.Content,
     onLoginChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onLoginClick: () -> Unit,
@@ -180,13 +174,12 @@ private fun LoginContent(
     }
 }
 
-
 @Preview
 @Composable
-fun RegisterScreenPreview() {
+fun LoginScreenPreview() {
     AppTheme {
         LoginContent(
-            state = LoginUiState.Input(),
+            state = LoginUiState.Content(),
             onLoginChange = {},
             onPasswordChange = {},
             onLoginClick = {},

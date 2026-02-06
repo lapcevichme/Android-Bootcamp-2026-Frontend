@@ -1,6 +1,7 @@
 package com.teto.planner.data.repository
 
 import com.teto.planner.data.local.CredentialsHolder
+import com.teto.planner.data.remote.dto.CreateUserRequest
 import com.teto.planner.data.remote.dto.LoginRequest
 import com.teto.planner.data.remote.dto.UserMeDto
 import com.teto.planner.data.remote.dto.toDomain
@@ -39,6 +40,30 @@ class AuthRepositoryImpl @Inject constructor(
 
             val errorMessage = errorJson?.get("error")?.jsonObject?.get("message")?.jsonPrimitive?.content
                 ?: "Ошибка сервера: ${response.status.value}"
+
+            throw Exception(errorMessage)
+        }
+    }
+
+    override suspend fun register(name: String, login: String, password: String, telegramNick: String?): Result<Unit> = runCatching {
+        val response = client.post("api/users") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                CreateUserRequest(
+                    login = login,
+                    name = name,
+                    password = password,
+                    telegramNick = telegramNick
+                )
+            )
+        }
+
+        if (response.status.isSuccess()) { Unit
+        } else {
+            val errorJson = runCatching { response.body<JsonObject>() }.getOrNull()
+
+            val errorMessage = errorJson?.get("error")?.jsonObject?.get("message")?.jsonPrimitive?.content
+                ?: "Ошибка регистрации: ${response.status.value}"
 
             throw Exception(errorMessage)
         }

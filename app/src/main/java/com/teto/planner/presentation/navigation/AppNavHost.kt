@@ -49,6 +49,7 @@ fun AppNavHost(
 
         composable(Screen.Register.route) {
             RegisterScreen(
+                viewModel = hiltViewModel(),
                 onRegisterSuccess = {
                     navController.navigate(Screen.Schedule.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }

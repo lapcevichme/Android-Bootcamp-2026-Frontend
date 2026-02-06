@@ -1,4 +1,4 @@
-package com.teto.planner.presentation.features.auth.login
+package com.teto.planner.presentation.features.auth.register
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,61 +15,81 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class LoginViewModel @Inject constructor(
+class RegisterViewModel @Inject constructor(
     private val repository: AuthRepository,
     private val sharedState: AuthSharedState
 ) : ViewModel() {
 
     private val _localState = MutableStateFlow(LocalState())
 
-    val uiState: StateFlow<LoginUiState> = combine(
+    val uiState: StateFlow<RegisterUiState> = combine(
+        sharedState.name,
         sharedState.login,
         sharedState.password,
+        sharedState.telegramNick,
         _localState
-    ) { login, password, local ->
-        LoginUiState.Content(
+    ) { name, login, password, telegram, local ->
+        RegisterUiState.Content(
+            name = name,
             login = login,
             password = password,
+            telegramNick = telegram,
             isSubmitting = local.isSubmitting,
             errorMessage = local.errorMessage,
-            isLoginSuccessful = local.isSuccess
+            isRegisterSuccessful = local.isSuccess
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = LoginUiState.Content()
+        initialValue = RegisterUiState.Content()
     )
 
-    fun onLoginInputChange(newValue: String) {
+    fun onNameChange(newValue: String) {
+        sharedState.name.value = newValue
+        clearError()
+    }
+
+    fun onLoginChange(newValue: String) {
         sharedState.login.value = newValue
         clearError()
     }
 
-    fun onPasswordInputChange(newValue: String) {
+    fun onPasswordChange(newValue: String) {
         sharedState.password.value = newValue
         clearError()
     }
 
-    fun onLoginClick() {
-        val currentLogin = sharedState.login.value
-        val currentPassword = sharedState.password.value
+    fun onTelegramNickChange(newValue: String) {
+        sharedState.telegramNick.value = newValue
+        clearError()
+    }
+
+    fun onRegisterClick() {
+        val name = sharedState.name.value
+        val login = sharedState.login.value
+        val password = sharedState.password.value
+        val telegram = sharedState.telegramNick.value.ifBlank { null }
         val currentState = _localState.value
 
-        if (currentLogin.isBlank() || currentPassword.isBlank() || currentState.isSubmitting) return
+        if (name.isBlank() || login.isBlank() || password.isBlank() || currentState.isSubmitting) return
 
         viewModelScope.launch {
             _localState.update { it.copy(isSubmitting = true, errorMessage = null) }
 
-            repository.login(currentLogin, currentPassword)
-                .fold(
-                    onSuccess = {
-                        _localState.update { it.copy(isSubmitting = false, isSuccess = true) }
-                    },
-                    onFailure = { error ->
-                        val msg = error.localizedMessage ?: "Ошибка входа"
-                        _localState.update { it.copy(isSubmitting = false, errorMessage = msg) }
-                    }
-                )
+            repository.register(
+                name = name,
+                login = login,
+                password = password,
+                telegramNick = telegram
+            ).fold(
+                onSuccess = {
+                    _localState.update { it.copy(isSubmitting = false, isSuccess = true) }
+                },
+                onFailure = { error ->
+                    val msg = error.localizedMessage ?: "Ошибка регистрации"
+                    _localState.update { it.copy(isSubmitting = false, errorMessage = msg) }
+                }
+            )
         }
     }
 
