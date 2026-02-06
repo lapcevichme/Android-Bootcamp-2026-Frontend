@@ -22,6 +22,7 @@ import com.teto.planner.presentation.features.auth.login.LoginScreen
 import com.teto.planner.presentation.features.auth.register.RegisterScreen
 import com.teto.planner.presentation.features.profile.ProfileScreen
 import com.teto.planner.presentation.features.schedule.ScheduleScreen
+import com.teto.planner.presentation.features.splash.SplashScreen
 
 @Composable
 fun AppNavHost(
@@ -30,9 +31,24 @@ fun AppNavHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Login.route,
+        startDestination = "splash",
         modifier = modifier
     ) {
+        composable("splash") {
+            SplashScreen(
+                onNavigateToLogin = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo("splash") { inclusive = true }
+                    }
+                },
+                onNavigateToSchedule = {
+                    navController.navigate(Screen.Schedule.route) {
+                        popUpTo("splash") { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable(Screen.Login.route) {
             LoginScreen(
                 viewModel = hiltViewModel(),

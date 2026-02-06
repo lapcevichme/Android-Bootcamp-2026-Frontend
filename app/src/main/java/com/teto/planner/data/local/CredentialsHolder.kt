@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -75,5 +76,19 @@ class CredentialsHolder @Inject constructor(
 
     fun hasCredentialsNow(): Boolean {
         return credentialsFlow.value != null
+    }
+
+    suspend fun getCredentials(): AuthCredentials? {
+        val prefs = context.dataStore.data.first()
+        val encLogin = prefs[LOGIN_KEY]
+        val encPass = prefs[PASS_KEY]
+
+        if (!encLogin.isNullOrBlank() && !encPass.isNullOrBlank()) {
+            return AuthCredentials(
+                login = cryptoManager.decryptString(encLogin),
+                pass = cryptoManager.decryptString(encPass)
+            )
+        }
+        return null
     }
 }
