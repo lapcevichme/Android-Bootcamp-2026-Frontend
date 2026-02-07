@@ -32,7 +32,7 @@ import kotlin.math.roundToInt
 
 @Composable
 fun InvitationScreen(
-    viewModel: InvitationsViewModel,
+    viewModel: InvitationViewModel,
     onProfileClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -49,7 +49,7 @@ fun InvitationScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InvitationContent(
-    uiState: InvitationsUiState,
+    uiState: InvitationUiState,
     onProfileClick: () -> Unit,
     onResponse: (Invitation, Boolean) -> Unit
 ) {
@@ -82,10 +82,10 @@ fun InvitationContent(
                 contentAlignment = Alignment.Center
             ) {
                 when (uiState) {
-                    is InvitationsUiState.Loading -> CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                    is InvitationsUiState.Empty -> EmptyState()
-                    is InvitationsUiState.Error -> Text(text = uiState.message, color = MaterialTheme.colorScheme.error)
-                    is InvitationsUiState.Success -> {
+                    is InvitationUiState.Loading -> CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                    is InvitationUiState.Empty -> EmptyState()
+                    is InvitationUiState.Error -> Text(text = uiState.message, color = MaterialTheme.colorScheme.error)
+                    is InvitationUiState.Success -> {
                         val invitations = uiState.invitations
                         val topInvitation = invitations.firstOrNull()
 
@@ -309,7 +309,7 @@ fun EmptyState() {
 fun InvitationScreenPreview() {
     AppTheme {
         InvitationContent(
-            uiState = InvitationsUiState.Empty,
+            uiState = InvitationUiState.Empty,
             onProfileClick = {},
             onResponse = { _, _ -> }
         )

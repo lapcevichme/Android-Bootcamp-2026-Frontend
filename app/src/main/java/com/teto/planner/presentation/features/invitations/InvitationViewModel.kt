@@ -13,12 +13,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 @HiltViewModel
-class InvitationsViewModel @Inject constructor(
+class InvitationViewModel @Inject constructor(
     private val repository: MeetingRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<InvitationsUiState>(InvitationsUiState.Loading)
-    val uiState: StateFlow<InvitationsUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow<InvitationUiState>(InvitationUiState.Loading)
+    val uiState: StateFlow<InvitationUiState> = _uiState.asStateFlow()
 
     init {
         loadInvitations()
@@ -26,18 +26,18 @@ class InvitationsViewModel @Inject constructor(
 
     fun loadInvitations() {
         viewModelScope.launch {
-            _uiState.value = InvitationsUiState.Loading
+            _uiState.value = InvitationUiState.Loading
 
             repository.listInvitations(ParticipantStatus.PENDING).fold(
                 onSuccess = { pagedList ->
                     if (pagedList.items.isEmpty()) {
-                        _uiState.value = InvitationsUiState.Empty
+                        _uiState.value = InvitationUiState.Empty
                     } else {
-                        _uiState.value = InvitationsUiState.Success(invitations = pagedList.items)
+                        _uiState.value = InvitationUiState.Success(invitations = pagedList.items)
                     }
                 },
                 onFailure = { error ->
-                    _uiState.value = InvitationsUiState.Error(error.message ?: "Неизвестная ошибка")
+                    _uiState.value = InvitationUiState.Error(error.message ?: "Неизвестная ошибка")
                 }
             )
         }
@@ -48,13 +48,13 @@ class InvitationsViewModel @Inject constructor(
 
         viewModelScope.launch {
             val currentState = _uiState.value
-            if (currentState is InvitationsUiState.Success) {
+            if (currentState is InvitationUiState.Success) {
                 val updatedList = currentState.invitations.filter { it.meeting.id != invitation.meeting.id }
 
                 if (updatedList.isEmpty()) {
-                    _uiState.value = InvitationsUiState.Empty
+                    _uiState.value = InvitationUiState.Empty
                 } else {
-                    _uiState.value = InvitationsUiState.Success(invitations = updatedList)
+                    _uiState.value = InvitationUiState.Success(invitations = updatedList)
                 }
             }
 
