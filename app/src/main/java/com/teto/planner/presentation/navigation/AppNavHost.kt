@@ -18,6 +18,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.teto.planner.presentation.features.auth.login.LoginScreen
 import com.teto.planner.presentation.features.auth.register.RegisterScreen
+import com.teto.planner.presentation.features.invitations.InvitationScreen
 import com.teto.planner.presentation.features.meeting_create.MeetingCreateScreen
 import com.teto.planner.presentation.features.profile.ProfileScreen
 import com.teto.planner.presentation.features.schedule.ScheduleScreen
@@ -85,9 +86,10 @@ fun AppNavHost(
         }
 
         composable(Screen.Invitations.route) {
-            TestScreenLayout(title = "Входящие приглашения") {
-                Text("Здесь будет список приглашений")
-            }
+            InvitationScreen(
+                viewModel = hiltViewModel(),
+                onProfileClick = { navController.navigate(Screen.Profile.route) },
+            )
         }
 
         composable(Screen.Profile.route) {
@@ -109,23 +111,5 @@ fun AppNavHost(
                 onSuccess = { navController.popBackStack() }
             )
         }
-    }
-}
-
-
-@Composable
-fun TestScreenLayout(
-    title: String,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(text = title, style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(24.dp))
-        content()
     }
 }
