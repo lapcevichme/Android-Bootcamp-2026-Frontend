@@ -45,6 +45,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+// todo бахнуть сюда Pull to refresh, надеюсь будет удобно
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleScreen(

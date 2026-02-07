@@ -45,6 +45,7 @@ import com.teto.planner.domain.model.user.UserMe
 import com.teto.planner.presentation.common.openTelegramChat
 import com.teto.planner.presentation.theme.AppTheme
 
+// todo мое мнение - нужно убрать как таковой режим "редактирования". Сделать просто кликабельными поля. Ну и еще можно сделать иконку карандашика для редакта, а не целую кнопку
 @Composable
 fun ProfileScreen(
     onSave: () -> Unit,

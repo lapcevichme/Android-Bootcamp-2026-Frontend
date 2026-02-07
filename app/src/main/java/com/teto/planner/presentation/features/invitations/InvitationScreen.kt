@@ -30,6 +30,8 @@ import java.time.format.DateTimeFormatter
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
+
+// todo - сделать кликабельными карточки? Мало инфы на них на самом деле
 @Composable
 fun InvitationScreen(
     viewModel: InvitationViewModel,
