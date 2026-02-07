@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -37,9 +38,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.teto.planner.domain.model.user.UserMe
+import com.teto.planner.presentation.common.openTelegramChat
 import com.teto.planner.presentation.theme.AppTheme
 
 @Composable
@@ -102,6 +105,8 @@ fun ProfileContent(
     onBack: () -> Unit,
     onExit: () -> Unit
 ) {
+    val context = LocalContext.current
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -111,7 +116,21 @@ fun ProfileContent(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
                     }
                 },
+                // todo вообще я использовал это для теста, но можно оставить для быстрой демки фичи
                 actions = {
+                    if (state.telegram.isNotBlank()) {
+                        IconButton(
+                            onClick = {
+                                context.openTelegramChat(state.telegram)
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Send,
+                                contentDescription = "Open Telegram",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                     IconButton(onClick = onExit) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ExitToApp,
