@@ -13,7 +13,9 @@ sealed interface MeetingCreateUiState {
         val searchQuery: String = "",
         val searchResults: List<UserSummary> = emptyList(),
         val searchMeta: PageMeta? = null,
+        val searchPage: Int = 0,
         val isSearching: Boolean = false,
+        val isLoadingMoreUsers: Boolean = false,
 
         val selectedParticipants: List<UserSummary> = emptyList(),
 
@@ -45,6 +47,12 @@ sealed interface MeetingCreateUiState {
                 selectedParticipants.isNotEmpty() &&
                 !isSubmitting &&
                 isCapacityValid
+
+        val canLoadMoreUsers: Boolean
+            get() = !isSearching &&
+                    !isLoadingMoreUsers &&
+                    searchMeta != null &&
+                    searchResults.size < searchMeta.total
     }
 
     data class Error(val message: String) : MeetingCreateUiState

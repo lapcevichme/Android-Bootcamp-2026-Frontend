@@ -28,9 +28,17 @@ class MeetingCreateViewModel @Inject constructor(
     val uiState: StateFlow<MeetingCreateUiState> = _uiState.asStateFlow()
 
     private var searchJob: Job? = null
+    private val pageSize = 20
 
     fun onSearchQueryChanged(query: String) {
-        updateSuccessState { it.copy(searchQuery = query) }
+        updateSuccessState {
+            it.copy(
+                searchQuery = query,
+                searchPage = 0,
+                searchResults = if (query.isBlank()) emptyList() else it.searchResults
+            )
+        }
+
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             delay(300)
@@ -38,13 +46,16 @@ class MeetingCreateViewModel @Inject constructor(
                 updateSuccessState { it.copy(searchResults = emptyList(), isSearching = false) }
                 return@launch
             }
+
             updateSuccessState { it.copy(isSearching = true) }
-            userRepository.listUsers(query = query, page = 0).onSuccess { pagedList ->
+
+            userRepository.listUsers(query = query, page = 0, size = pageSize).onSuccess { pagedList ->
                 updateSuccessState {
                     it.copy(
                         searchResults = pagedList.items,
                         searchMeta = pagedList.meta,
-                        isSearching = false
+                        isSearching = false,
+                        searchPage = 0
                     )
                 }
             }.onFailure {
@@ -53,8 +64,43 @@ class MeetingCreateViewModel @Inject constructor(
         }
     }
 
+    fun onLoadMoreUsers() {
+        val state = _uiState.value as? MeetingCreateUiState.Success ?: return
+        if (!state.canLoadMoreUsers) return
+
+        val nextPage = state.searchPage + 1
+
+        updateSuccessState { it.copy(isLoadingMoreUsers = true) }
+
+        viewModelScope.launch {
+            userRepository.listUsers(
+                query = state.searchQuery,
+                page = nextPage,
+                size = pageSize
+            ).onSuccess { pagedList ->
+                updateSuccessState { currentState ->
+                    currentState.copy(
+                        searchResults = currentState.searchResults + pagedList.items,
+                        searchMeta = pagedList.meta,
+                        searchPage = nextPage,
+                        isLoadingMoreUsers = false
+                    )
+                }
+            }.onFailure {
+                updateSuccessState { it.copy(isLoadingMoreUsers = false) }
+            }
+        }
+    }
+
     fun onParticipantSelected(user: UserSummary) {
         updateSuccessState { state ->
+            if (state.selectedParticipants.any { it.id == user.id }) {
+                return@updateSuccessState state.copy(
+                    searchQuery = "",
+                    searchResults = emptyList()
+                )
+            }
+
             state.copy(
                 selectedParticipants = state.selectedParticipants + user,
                 searchQuery = "",

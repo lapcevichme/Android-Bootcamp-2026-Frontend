@@ -55,6 +55,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -87,7 +88,6 @@ import java.util.Locale
 
 // fixme этот ужас надо чинить, вот список багов:
 // можно выбрать себя из списка
-// можно выбрать человека несколько раз
 
 // todo
 // добавить кнопку экстренной брони - взял юзеров - тык - создал встречу на ближайшее время
@@ -107,6 +107,7 @@ fun MeetingCreateScreen(
     MeetingCreateContent(
         state = uiState,
         onSearchQueryChanged = viewModel::onSearchQueryChanged,
+        onLoadMoreUsers = viewModel::onLoadMoreUsers,
         onParticipantSelected = viewModel::onParticipantSelected,
         onParticipantRemoved = viewModel::onParticipantRemoved,
         onDateSelected = viewModel::onDateSelected,
@@ -124,6 +125,7 @@ fun MeetingCreateScreen(
 fun MeetingCreateContent(
     state: MeetingCreateUiState,
     onSearchQueryChanged: (String) -> Unit,
+    onLoadMoreUsers: () -> Unit,
     onParticipantSelected: (UserSummary) -> Unit,
     onParticipantRemoved: (String) -> Unit,
     onDateSelected: (LocalDate) -> Unit,
@@ -172,6 +174,7 @@ fun MeetingCreateContent(
                     SuccessLayout(
                         state = state,
                         onSearchQueryChanged = onSearchQueryChanged,
+                        onLoadMoreUsers = onLoadMoreUsers,
                         onParticipantSelected = onParticipantSelected,
                         onParticipantRemoved = onParticipantRemoved,
                         onDateSelected = onDateSelected,
@@ -192,6 +195,7 @@ fun MeetingCreateContent(
 private fun SuccessLayout(
     state: MeetingCreateUiState.Success,
     onSearchQueryChanged: (String) -> Unit,
+    onLoadMoreUsers: () -> Unit,
     onParticipantSelected: (UserSummary) -> Unit,
     onParticipantRemoved: (String) -> Unit,
     onDateSelected: (LocalDate) -> Unit,
@@ -286,6 +290,8 @@ private fun SuccessLayout(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(state.searchResults) { user ->
+                        val isSelected = state.selectedParticipants.any { it.id == user.id }
+
                         ListItem(
                             headlineContent = { Text(user.name) },
                             leadingContent = {
@@ -294,12 +300,42 @@ private fun SuccessLayout(
                                     contentDescription = null
                                 )
                             },
-                            modifier = Modifier.clickable {
-                                onParticipantSelected(user)
-                                searchExpanded = false
-                                onSearchQueryChanged("")
-                            }
+                            trailingContent = {
+                                if (isSelected) {
+                                    Icon(
+                                        Icons.Default.Check,
+                                        contentDescription = "Уже выбран",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            },
+                            modifier = Modifier
+                                .clickable(enabled = !isSelected) {
+                                    onParticipantSelected(user)
+                                    searchExpanded = false
+                                    onSearchQueryChanged("")
+                                }
+                                .alpha(if (isSelected) 0.5f else 1f)
                         )
+                    }
+
+                    if (state.canLoadMoreUsers) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    strokeWidth = 2.dp
+                                )
+                                LaunchedEffect(Unit) {
+                                    onLoadMoreUsers()
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -602,6 +638,7 @@ fun MeetingCreatePreview(@PreviewParameter(MeetingCreateStateProvider::class) st
         MeetingCreateContent(
             state = state,
             onSearchQueryChanged = {},
+            onLoadMoreUsers = {},
             onParticipantSelected = {},
             onParticipantRemoved = {},
             onDateSelected = {},
