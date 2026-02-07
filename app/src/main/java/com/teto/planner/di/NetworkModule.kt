@@ -3,12 +3,15 @@ package com.teto.planner.di
 import android.util.Base64
 import android.util.Log
 import com.teto.planner.data.local.CredentialsHolder
+import com.teto.planner.data.remote.dto.ApiErrorDto
+import com.teto.planner.data.remote.dto.ApiException
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -18,13 +21,14 @@ import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.plugin
 import io.ktor.client.request.header
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.encodedPath
+import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import javax.inject.Singleton
-
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
@@ -33,13 +37,36 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideHttpClient(credentialsHolder: CredentialsHolder): HttpClient {
+        val jsonParams = Json {
+            ignoreUnknownKeys = true
+            prettyPrint = true
+            isLenient = true
+        }
+
         return HttpClient(CIO) {
             install(ContentNegotiation) {
-                json(Json {
-                    ignoreUnknownKeys = true
-                    prettyPrint = true
-                    isLenient = true
-                })
+                json(jsonParams)
+            }
+
+            HttpResponseValidator {
+                validateResponse { response ->
+                    if (!response.status.isSuccess()) {
+                        val errorBody = response.bodyAsText()
+
+                        try {
+                            val apiError = jsonParams.decodeFromString<ApiErrorDto>(errorBody)
+                            val message = apiError.error ?: apiError.message ?: "Unknown API error"
+                            throw ApiException(message, response.status.value)
+                        } catch (e: Exception) {
+                            if (e is ApiException) throw e
+
+                            throw ApiException(
+                                "Server error: ${response.status.value}. Body: $errorBody",
+                                response.status.value
+                            )
+                        }
+                    }
+                }
             }
 
             defaultRequest {
@@ -63,7 +90,8 @@ object NetworkModule {
             }
         }.apply {
             plugin(HttpSend).intercept { request ->
-                if (request.url.encodedPath != "/api/auth/login") {
+                val path = request.url.encodedPath
+                if (!path.contains("login") && !path.contains("register")) {
                     val creds = credentialsHolder.credentialsFlow.value
 
                     if (creds != null) {

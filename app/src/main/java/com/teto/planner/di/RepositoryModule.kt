@@ -1,9 +1,9 @@
 package com.teto.planner.di
 
 import com.teto.planner.data.repository.AuthRepositoryImpl
-import com.teto.planner.data.repository.MockMeetingRepository
-import com.teto.planner.data.repository.MockRoomRepository
-import com.teto.planner.data.repository.MockUserRepository
+import com.teto.planner.data.repository.MeetingRepositoryImpl
+import com.teto.planner.data.repository.RoomRepositoryImpl
+import com.teto.planner.data.repository.UserRepositoryImpl
 import com.teto.planner.domain.repository.AuthRepository
 import com.teto.planner.domain.repository.MeetingRepository
 import com.teto.planner.domain.repository.RoomRepository
@@ -26,18 +26,18 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindMeetingRepository(
-        impl: MockMeetingRepository
+        impl: MeetingRepositoryImpl
     ): MeetingRepository
 
     @Binds
     @Singleton
     abstract fun bindUserRepository(
-        impl: MockUserRepository
+        impl: UserRepositoryImpl
     ): UserRepository
 
     @Binds
     @Singleton
     abstract fun bindRoomRepository(
-        impl: MockRoomRepository
+        impl: RoomRepositoryImpl
     ): RoomRepository
 }
