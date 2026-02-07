@@ -1,5 +1,6 @@
 package com.teto.planner.presentation.features.schedule
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -101,8 +102,18 @@ fun ScheduleScreen(
                     ScheduleContent(
                         state = state,
                         dateFormatter = dateFormatter,
-                        onDateSelected = { viewModel.onDateSelected(it) }
+                        onDateSelected = { viewModel.onDateSelected(it) },
+                        onMeetingClick = { meeting -> viewModel.openMeetingDetails(meeting) }
                     )
+
+                    state.selectedMeeting?.let { meeting ->
+                        MeetingDetailsDialog(
+                            meeting = meeting,
+                            isLoading = state.isMeetingDetailsLoading,
+                            error = state.meetingDetailsError,
+                            onDismiss = viewModel::closeMeetingDetails
+                        )
+                    }
                 }
             }
         }
@@ -113,7 +124,8 @@ fun ScheduleScreen(
 private fun ScheduleContent(
     state: ScheduleUiState.Success,
     dateFormatter: DateTimeFormatter,
-    onDateSelected: (LocalDate) -> Unit
+    onDateSelected: (LocalDate) -> Unit,
+    onMeetingClick: (Meeting) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth()) {
@@ -148,7 +160,10 @@ private fun ScheduleContent(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(state.meetingsForSelectedDate) { meeting ->
-                            TaskCard(meeting)
+                            TaskCard(
+                                meeting = meeting,
+                                onClick = { onMeetingClick(meeting) }
+                            )
                         }
                         item { Spacer(modifier = Modifier.height(80.dp)) }
                     }
@@ -159,8 +174,10 @@ private fun ScheduleContent(
 }
 
 @Composable
-fun TaskCard(meeting: Meeting) {
-    Card {
+fun TaskCard(meeting: Meeting, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier.clickable(onClick = onClick)
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()

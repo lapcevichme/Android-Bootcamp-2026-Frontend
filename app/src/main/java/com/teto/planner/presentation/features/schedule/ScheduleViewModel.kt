@@ -2,6 +2,7 @@ package com.teto.planner.presentation.features.schedule
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.teto.planner.domain.model.meeting.Meeting
 import com.teto.planner.domain.repository.MeetingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,7 +12,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
-
 
 @HiltViewModel
 class ScheduleViewModel @Inject constructor(
@@ -37,9 +37,12 @@ class ScheduleViewModel @Inject constructor(
 
     fun loadMeetingsForMonth(date: LocalDate) {
         viewModelScope.launch {
-            val currentDate = (uiState.value as? ScheduleUiState.Success)?.selectedDate ?: date
+            val currentState = uiState.value
+            val currentDate = (currentState as? ScheduleUiState.Success)?.selectedDate ?: date
 
-            _uiState.update { ScheduleUiState.Loading }
+            if (currentState !is ScheduleUiState.Success) {
+                _uiState.update { ScheduleUiState.Loading }
+            }
 
             val result = repository.getMeetings(
                 startDate = date.withDayOfMonth(1),
@@ -58,6 +61,23 @@ class ScheduleViewModel @Inject constructor(
                     ScheduleUiState.Error(error.message ?: "Неизвестная ошибка")
                 }
             }
+        }
+    }
+
+    fun openMeetingDetails(summaryMeeting: Meeting) {
+        val currentState = _uiState.value as? ScheduleUiState.Success ?: return
+        _uiState.update {
+            currentState.copy(
+                selectedMeeting = summaryMeeting,
+                isMeetingDetailsLoading = false
+            )
+        }
+    }
+
+    fun closeMeetingDetails() {
+        val currentState = _uiState.value as? ScheduleUiState.Success ?: return
+        _uiState.update {
+            currentState.copy(selectedMeeting = null, isMeetingDetailsLoading = false)
         }
     }
 }
