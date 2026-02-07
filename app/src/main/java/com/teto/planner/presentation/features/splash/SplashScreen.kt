@@ -37,6 +37,7 @@ fun SplashScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
+            // todo картинка сюда
             CircularProgressIndicator()
         }
     }

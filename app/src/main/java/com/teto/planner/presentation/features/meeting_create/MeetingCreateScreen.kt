@@ -164,12 +164,14 @@ private fun SuccessLayout(
 ) {
     var searchExpanded by rememberSaveable { mutableStateOf(false) }
 
+    // todo много вложенной верстки, краш из-за search bar + lazy column?
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
+            // fixme deprecated элемент
             SearchBar(
                 modifier = Modifier.fillMaxWidth(),
                 query = state.searchQuery,
@@ -379,7 +381,7 @@ fun TimeSlotChip(slot: IntersectionSlot, isSelected: Boolean, onClick: () -> Uni
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                 }
-                Text(text = slot.label, style = MaterialTheme.typography.bodySmall)
+                Text(text = slot.label ?: "", style = MaterialTheme.typography.bodySmall) // fixme
             }
             if (conflictUser != null) {
                 Text(

@@ -85,6 +85,7 @@ fun ProfileContent(
             CenterAlignedTopAppBar(
                 title = { Text("Мой профиль", style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
+                    // todo тут вообще должно быть onBack, onExit -> выход с аккаунта
                     IconButton(onClick = onExit) {
                         Icon(Icons.Default.ArrowBack, contentDescription = null)
                     }

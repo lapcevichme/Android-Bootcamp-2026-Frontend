@@ -6,10 +6,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,6 +18,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.teto.planner.presentation.features.auth.login.LoginScreen
 import com.teto.planner.presentation.features.auth.register.RegisterScreen
+import com.teto.planner.presentation.features.meeting_create.MeetingCreateScreen
 import com.teto.planner.presentation.features.profile.ProfileScreen
 import com.teto.planner.presentation.features.schedule.ScheduleScreen
 import com.teto.planner.presentation.features.splash.SplashScreen
@@ -104,16 +103,11 @@ fun AppNavHost(
         }
 
         composable(Screen.MeetingCreate.route) {
-            TestScreenLayout(title = "Новая встреча") {
-                Button(onClick = {
-                    navController.popBackStack()
-                }) {
-                    Text("Сохранить и вернуться")
-                }
-                TextButton(onClick = { navController.popBackStack() }) {
-                    Text("Отмена")
-                }
-            }
+            MeetingCreateScreen(
+                viewModel = hiltViewModel(),
+                onBack = { navController.popBackStack() },
+                onSuccess = { navController.popBackStack() }
+            )
         }
     }
 }

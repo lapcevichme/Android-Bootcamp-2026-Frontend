@@ -82,6 +82,7 @@ fun MyBottomNavigationBar(
                 label = { Text(item.label) },
                 selected = isSelected,
                 onClick = {
+                    // fixme экраны не сейвятся при переходе в bottom nav
                     navController.navigate(item.screen.route) {
                         popUpTo(navController.graph.findStartDestination().id) {
                             saveState = true
