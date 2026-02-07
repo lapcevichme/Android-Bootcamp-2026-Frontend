@@ -25,6 +25,7 @@ import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
 import com.kizitonwose.calendar.core.CalendarDay
 import com.kizitonwose.calendar.core.DayPosition
+import com.kizitonwose.calendar.core.OutDateStyle
 import com.kizitonwose.calendar.core.firstDayOfWeekFromLocale
 import com.teto.planner.domain.model.meeting.Meeting
 import java.time.DayOfWeek
@@ -49,7 +50,8 @@ fun SharedCalendar(
         startMonth = startMonth,
         endMonth = endMonth,
         firstVisibleMonth = currentMonth,
-        firstDayOfWeek = firstDayOfWeek
+        firstDayOfWeek = firstDayOfWeek,
+        outDateStyle = OutDateStyle.EndOfGrid
     )
 
     HorizontalCalendar(
@@ -98,21 +100,22 @@ private fun DayCell(
     onClick: (CalendarDay) -> Unit
 ) {
     val isCurrentMonthDay = day.position == DayPosition.MonthDate
-    val textColor = if (isCurrentMonthDay) MaterialTheme.colorScheme.onSurface else Color.LightGray
+
+    val textColor = if (isCurrentMonthDay) MaterialTheme.colorScheme.onSurface else Color.LightGray.copy(alpha = 0.5f)
 
     Box(
         modifier = Modifier
             .aspectRatio(1f)
             .padding(4.dp)
             .clip(CircleShape)
-            .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
+            .background(if (isSelected && isCurrentMonthDay) MaterialTheme.colorScheme.primary else Color.Transparent)
             .clickable(enabled = isCurrentMonthDay) { onClick(day) },
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = day.date.dayOfMonth.toString(),
-                color = if (isSelected) MaterialTheme.colorScheme.onPrimary else textColor,
+                color = if (isSelected && isCurrentMonthDay) MaterialTheme.colorScheme.onPrimary else textColor,
                 style = MaterialTheme.typography.bodyLarge
             )
 
@@ -147,29 +150,3 @@ private fun DaysOfWeekTitle(daysOfWeek: List<DayOfWeek>) {
         }
     }
 }
-
-/*
-@Preview(showBackground = true, name = "Calendar")
-@Composable
-fun SharedCalendarPreview() {
-    val today = LocalDate.now()
-    val mockMeetings = mapOf(
-        today to listOf(
-            Meeting("", "", "", today, listOf(""))
-        ),
-        today.plusDays(3) to listOf(
-            Meeting("", "", "", today.plusDays(3), listOf(""))
-        )
-    )
-
-    MaterialTheme {
-        Surface(modifier = Modifier.padding(16.dp)) {
-            SharedCalendar(
-                selectedDate = today,
-                onDateSelected = {},
-                meetingsByDate = mockMeetings
-            )
-        }
-    }
-}
- */
