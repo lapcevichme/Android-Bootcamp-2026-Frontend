@@ -2,6 +2,7 @@ package com.teto.planner.presentation.features.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.teto.planner.domain.repository.AuthRepository
 import com.teto.planner.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,7 +13,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ProfileScreenUiState>(ProfileScreenUiState.Loading)
@@ -89,5 +91,9 @@ class ProfileViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun logout() {
+        authRepository.logout()
     }
 }
