@@ -32,10 +32,19 @@ sealed interface MeetingCreateUiState {
 
         val isSubmitting: Boolean = false
     ) : MeetingCreateUiState {
+        val selectedRoom: Room?
+            get() = availableRooms.find { it.id == selectedRoomId }
+
+        val isCapacityValid: Boolean
+            get() = selectedRoom?.let { room ->
+                (selectedParticipants.size + 1) <= room.capacity
+            } ?: true
+
         val canSubmit: Boolean get() = title.isNotBlank() &&
                 selectedHour != null &&
                 selectedParticipants.isNotEmpty() &&
-                !isSubmitting
+                !isSubmitting &&
+                isCapacityValid
     }
 
     data class Error(val message: String) : MeetingCreateUiState

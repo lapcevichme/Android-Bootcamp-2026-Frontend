@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Cancel
@@ -34,22 +36,30 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -69,7 +79,11 @@ import com.teto.planner.domain.model.meeting.IntersectionSlot
 import com.teto.planner.domain.model.meeting.IntersectionSlotStatus
 import com.teto.planner.domain.model.user.UserSummary
 import com.teto.planner.presentation.theme.AppTheme
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
 fun MeetingCreateScreen(
@@ -84,6 +98,7 @@ fun MeetingCreateScreen(
         onSearchQueryChanged = viewModel::onSearchQueryChanged,
         onParticipantSelected = viewModel::onParticipantSelected,
         onParticipantRemoved = viewModel::onParticipantRemoved,
+        onDateSelected = viewModel::onDateSelected,
         onHourSelected = viewModel::onHourSelected,
         onRoomSelected = viewModel::onRoomSelected,
         onTitleChanged = viewModel::onTitleChanged,
@@ -100,6 +115,7 @@ fun MeetingCreateContent(
     onSearchQueryChanged: (String) -> Unit,
     onParticipantSelected: (UserSummary) -> Unit,
     onParticipantRemoved: (String) -> Unit,
+    onDateSelected: (LocalDate) -> Unit,
     onHourSelected: (Int) -> Unit,
     onRoomSelected: (String) -> Unit,
     onTitleChanged: (String) -> Unit,
@@ -122,9 +138,12 @@ fun MeetingCreateContent(
             )
         }
     ) { innerPadding ->
-        Surface(modifier = Modifier
-            .fillMaxSize()
-            .padding(innerPadding)) {
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
+        ) {
             when (state) {
                 is MeetingCreateUiState.Loading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -144,6 +163,7 @@ fun MeetingCreateContent(
                         onSearchQueryChanged = onSearchQueryChanged,
                         onParticipantSelected = onParticipantSelected,
                         onParticipantRemoved = onParticipantRemoved,
+                        onDateSelected = onDateSelected,
                         onHourSelected = onHourSelected,
                         onRoomSelected = onRoomSelected,
                         onTitleChanged = onTitleChanged,
@@ -163,6 +183,7 @@ private fun SuccessLayout(
     onSearchQueryChanged: (String) -> Unit,
     onParticipantSelected: (UserSummary) -> Unit,
     onParticipantRemoved: (String) -> Unit,
+    onDateSelected: (LocalDate) -> Unit,
     onHourSelected: (Int) -> Unit,
     onRoomSelected: (String) -> Unit,
     onTitleChanged: (String) -> Unit,
@@ -170,6 +191,52 @@ private fun SuccessLayout(
     onCreateMeeting: () -> Unit
 ) {
     var searchExpanded by rememberSaveable { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = state.selectedDate
+                .atStartOfDay(ZoneOffset.UTC)
+                .toInstant()
+                .toEpochMilli(),
+            selectableDates = object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                    val today =
+                        LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+                    return utcTimeMillis >= today
+                }
+            }
+        )
+
+        val confirmEnabled by remember { derivedStateOf { datePickerState.selectedDateMillis != null } }
+
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            val selectedDate = Instant.ofEpochMilli(millis)
+                                .atZone(ZoneOffset.UTC)
+                                .toLocalDate()
+                            onDateSelected(selectedDate)
+                        }
+                        showDatePicker = false
+                    },
+                    enabled = confirmEnabled
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Отмена")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -178,7 +245,7 @@ private fun SuccessLayout(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = if (searchExpanded) 0.dp else 16.dp)
-                .padding(top = 16.dp, bottom = 8.dp)
+                .padding(top = if (searchExpanded) 0.dp else 16.dp, bottom = 8.dp)
         ) {
             SearchBar(
                 modifier = Modifier.fillMaxWidth(),
@@ -243,11 +310,34 @@ private fun SuccessLayout(
                 item { HorizontalDivider() }
 
                 item {
-                    Text(
-                        text = "Когда?",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Когда?",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+
+                        OutlinedButton(
+                            onClick = { showDatePicker = true }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.EditCalendar,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            val formatter = DateTimeFormatter.ofPattern(
+                                "d MMM yyyy",
+                                Locale.forLanguageTag("ru")
+                            )
+                            Text(text = state.selectedDate.format(formatter))
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     if (state.intersectionResponse != null) {
                         FlowRow(
@@ -291,6 +381,15 @@ private fun SuccessLayout(
                                         onClick = { onRoomSelected(room.id) }
                                     )
                                 }
+                            }
+
+                            if (!state.isCapacityValid && state.selectedRoom != null) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "В выбранной комнате недостаточно мест (${state.selectedRoom!!.capacity}) для ${state.selectedParticipants.size + 1} участников (включая вас).",
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
                             }
                         }
                     }
@@ -410,7 +509,7 @@ fun TimeSlotChip(slot: IntersectionSlot, isSelected: Boolean, onClick: () -> Uni
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                 }
-                Text(text = slot.label ?: "", style = MaterialTheme.typography.bodySmall) // fixme
+                Text(text = slot.label ?: "", style = MaterialTheme.typography.bodySmall)
             }
             if (conflictUser != null) {
                 Text(
@@ -494,6 +593,7 @@ fun MeetingCreatePreview(@PreviewParameter(MeetingCreateStateProvider::class) st
             onSearchQueryChanged = {},
             onParticipantSelected = {},
             onParticipantRemoved = {},
+            onDateSelected = {},
             onHourSelected = {},
             onRoomSelected = {},
             onTitleChanged = {},

@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
@@ -39,11 +40,13 @@ class MeetingCreateViewModel @Inject constructor(
             }
             updateSuccessState { it.copy(isSearching = true) }
             userRepository.listUsers(query = query, page = 0).onSuccess { pagedList ->
-                updateSuccessState { it.copy(
-                    searchResults = pagedList.items,
-                    searchMeta = pagedList.meta,
-                    isSearching = false
-                ) }
+                updateSuccessState {
+                    it.copy(
+                        searchResults = pagedList.items,
+                        searchMeta = pagedList.meta,
+                        isSearching = false
+                    )
+                }
             }.onFailure {
                 updateSuccessState { it.copy(isSearching = false) }
             }
@@ -64,6 +67,20 @@ class MeetingCreateViewModel @Inject constructor(
     fun onParticipantRemoved(userId: String) {
         updateSuccessState { state ->
             state.copy(selectedParticipants = state.selectedParticipants.filter { it.id != userId })
+        }
+        updateIntersectionData()
+    }
+
+    fun onDateSelected(date: LocalDate) {
+        updateSuccessState {
+            it.copy(
+                selectedDate = date,
+                intersectionResponse = null,
+                selectedHour = null,
+                availableRooms = emptyList(),
+                selectedRoomId = null,
+                roomsMeta = null
+            )
         }
         updateIntersectionData()
     }
@@ -100,11 +117,13 @@ class MeetingCreateViewModel @Inject constructor(
                 date = state.selectedDate,
                 startHour = hour
             ).onSuccess { pagedList ->
-                updateSuccessState { it.copy(
-                    availableRooms = pagedList.items,
-                    roomsMeta = pagedList.meta,
-                    isLoadingRooms = false
-                ) }
+                updateSuccessState {
+                    it.copy(
+                        availableRooms = pagedList.items,
+                        roomsMeta = pagedList.meta,
+                        isLoadingRooms = false
+                    )
+                }
             }.onFailure {
                 updateSuccessState { it.copy(isLoadingRooms = false) }
             }
