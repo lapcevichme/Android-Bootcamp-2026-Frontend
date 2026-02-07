@@ -113,24 +113,31 @@ fun MeetingCreateContent(
                 title = { Text("Создать встречу") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null
+                        )
                     }
                 }
             )
         }
     ) { innerPadding ->
-        Surface(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+        Surface(modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)) {
             when (state) {
                 is MeetingCreateUiState.Loading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                     }
                 }
+
                 is MeetingCreateUiState.Error -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(text = state.message, color = MaterialTheme.colorScheme.error)
                     }
                 }
+
                 is MeetingCreateUiState.Success -> {
                     SuccessLayout(
                         state = state,
@@ -164,14 +171,15 @@ private fun SuccessLayout(
 ) {
     var searchExpanded by rememberSaveable { mutableStateOf(false) }
 
-    // todo много вложенной верстки, краш из-за search bar + lazy column?
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+    Column(
+        modifier = Modifier.fillMaxSize()
     ) {
-        item {
-            // fixme deprecated элемент
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = if (searchExpanded) 0.dp else 16.dp)
+                .padding(top = 16.dp, bottom = 8.dp)
+        ) {
             SearchBar(
                 modifier = Modifier.fillMaxWidth(),
                 query = state.searchQuery,
@@ -189,125 +197,146 @@ private fun SuccessLayout(
                     }
                 },
                 shape = RoundedCornerShape(8.dp),
-                colors = SearchBarDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            ) {
-                state.searchResults.forEach { user ->
-                    ListItem(
-                        headlineContent = { Text(user.name) },
-                        leadingContent = { Icon(Icons.Default.Person, contentDescription = null) },
-                        modifier = Modifier.clickable {
-                            onParticipantSelected(user)
-                            searchExpanded = false
-                        }
+                colors = SearchBarDefaults.colors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                        alpha = 0.5f
                     )
-                }
-            }
-        }
-
-        items(state.selectedParticipants) { user ->
-            ParticipantCard(
-                user = user,
-                onRemove = { onParticipantRemoved(user.id) }
-            )
-        }
-
-        if (state.selectedParticipants.isNotEmpty()) {
-            item { HorizontalDivider() }
-
-            item {
-                Text(
-                    text = "Когда?",
-                    style = MaterialTheme.typography.titleLarge
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                if (state.intersectionResponse != null) {
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        state.intersectionResponse.slots.forEach { slot ->
-                            TimeSlotChip(
-                                slot = slot,
-                                isSelected = state.selectedHour == slot.hour,
-                                onClick = { onHourSelected(slot.hour) }
-                            )
-                        }
+            ) {
+                LazyColumn(
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(state.searchResults) { user ->
+                        ListItem(
+                            headlineContent = { Text(user.name) },
+                            leadingContent = {
+                                Icon(
+                                    Icons.Default.Person,
+                                    contentDescription = null
+                                )
+                            },
+                            modifier = Modifier.clickable {
+                                onParticipantSelected(user)
+                                searchExpanded = false
+                                onSearchQueryChanged("")
+                            }
+                        )
                     }
                 }
             }
+        }
 
-            if (state.selectedHour != null) {
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(state.selectedParticipants) { user ->
+                ParticipantCard(
+                    user = user,
+                    onRemove = { onParticipantRemoved(user.id) }
+                )
+            }
+
+            if (state.selectedParticipants.isNotEmpty()) {
                 item { HorizontalDivider() }
 
                 item {
                     Text(
-                        text = "Где?",
+                        text = "Когда?",
                         style = MaterialTheme.typography.titleLarge
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    if (state.isLoadingRooms) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                    } else {
+                    if (state.intersectionResponse != null) {
                         FlowRow(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            state.availableRooms.forEach { room ->
-                                RoomChip(
-                                    room = room,
-                                    isSelected = state.selectedRoomId == room.id,
-                                    onClick = { onRoomSelected(room.id) }
+                            state.intersectionResponse.slots.forEach { slot ->
+                                TimeSlotChip(
+                                    slot = slot,
+                                    isSelected = state.selectedHour == slot.hour,
+                                    onClick = { onHourSelected(slot.hour) }
                                 )
                             }
                         }
                     }
                 }
 
-                item { HorizontalDivider() }
+                if (state.selectedHour != null) {
+                    item { HorizontalDivider() }
 
-                item {
-                    OutlinedTextField(
-                        value = state.title,
-                        onValueChange = onTitleChanged,
-                        label = { Text("Тема встречи") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        singleLine = true
-                    )
-                }
+                    item {
+                        Text(
+                            text = "Где?",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                item {
-                    OutlinedTextField(
-                        value = state.description,
-                        onValueChange = onDescriptionChanged,
-                        label = { Text("Описание (опционально)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        maxLines = 3
-                    )
-                }
-
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = onCreateMeeting,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        enabled = state.canSubmit,
-                        shape = RoundedCornerShape(28.dp)
-                    ) {
-                        if (state.isSubmitting) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
+                        if (state.isLoadingRooms) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
                         } else {
-                            Text("Создать встречу")
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                state.availableRooms.forEach { room ->
+                                    RoomChip(
+                                        room = room,
+                                        isSelected = state.selectedRoomId == room.id,
+                                        onClick = { onRoomSelected(room.id) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    item { HorizontalDivider() }
+
+                    item {
+                        OutlinedTextField(
+                            value = state.title,
+                            onValueChange = onTitleChanged,
+                            label = { Text("Тема встречи") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            singleLine = true
+                        )
+                    }
+
+                    item {
+                        OutlinedTextField(
+                            value = state.description,
+                            onValueChange = onDescriptionChanged,
+                            label = { Text("Описание (опционально)") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            maxLines = 3
+                        )
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = onCreateMeeting,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            enabled = state.canSubmit,
+                            shape = RoundedCornerShape(28.dp)
+                        ) {
+                            if (state.isSubmitting) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            } else {
+                                Text("Создать встречу")
+                            }
                         }
                     }
                 }
@@ -362,7 +391,7 @@ fun TimeSlotChip(slot: IntersectionSlot, isSelected: Boolean, onClick: () -> Uni
             .clip(RoundedCornerShape(8.dp))
             .border(
                 width = 1.dp,
-                color = if (isSelected) Color.Transparent else MaterialTheme.colorScheme.outline  ,
+                color = if (isSelected) Color.Transparent else MaterialTheme.colorScheme.outline,
                 shape = RoundedCornerShape(8.dp)
             )
             .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
