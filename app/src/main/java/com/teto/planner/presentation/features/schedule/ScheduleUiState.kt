@@ -8,8 +8,10 @@ sealed interface ScheduleUiState {
 
     data class Success(
         val meetings: List<Meeting>,
+        val currentUserId: String,
         val selectedDate: LocalDate = LocalDate.now(),
         val selectedMeeting: Meeting? = null,
+        val meetingToEdit: Meeting? = null,
         val isMeetingDetailsLoading: Boolean = false,
         val meetingDetailsError: String? = null,
         val isLoading: Boolean = false,

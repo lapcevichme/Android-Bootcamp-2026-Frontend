@@ -29,6 +29,14 @@ interface MeetingRepository {
         participantIds: List<String>
     ): Result<Meeting>
 
+    suspend fun updateMeeting(
+        meetingId: String,
+        title: String? = null,
+        description: String? = null,
+        roomId: String? = null,
+        status: String? = null
+    ): Result<Meeting>
+
     suspend fun getIntersection(
         date: LocalDate,
         userIds: List<String>
@@ -42,4 +50,6 @@ interface MeetingRepository {
         meetingId: String,
         status: ParticipantStatus
     ): Result<MeetingParticipant>
+
+    suspend fun getCurrentUserId(): Result<String>
 }

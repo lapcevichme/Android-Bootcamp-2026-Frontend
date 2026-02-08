@@ -196,62 +196,71 @@ fun ProfileContent(
             Box(
                 modifier = Modifier
                     .size(120.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer)
                     .clickable(onClick = onAvatarClick),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    Icons.Default.Person,
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(0.6f),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-
-                val fullAvatarUrl = remember(state.user.avatarUrl, state.user.updatedAt) {
-                    state.user.avatarUrl?.let { url ->
-                        val base =
-                            if (url.startsWith("/")) "https://teto-planner.fly.dev$url" else url
-                        val version = state.user.updatedAt?.hashCode() ?: ""
-                        "$base?v=$version"
-                    }
-                }
-
-                if (!fullAvatarUrl.isNullOrBlank()) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(fullAvatarUrl)
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = "Avatar",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Person,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(0.6f),
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
                     )
-                }
 
-                if (state.isAvatarUploading) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.4f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(
-                            color = Color.White,
-                            modifier = Modifier.size(32.dp)
+                    val fullAvatarUrl = remember(state.user.avatarUrl, state.user.updatedAt) {
+                        state.user.avatarUrl?.let { url ->
+                            val base =
+                                if (url.startsWith("/")) "https://teto-planner.fly.dev$url" else url
+                            val version = state.user.updatedAt?.hashCode() ?: ""
+                            "$base?v=$version"
+                        }
+                    }
+
+                    if (!fullAvatarUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(fullAvatarUrl)
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = "Avatar",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
                         )
+                    }
+
+                    if (state.isAvatarUploading) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.Black.copy(alpha = 0.4f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
                     }
                 }
 
                 if (!state.isAvatarUploading) {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxSize(),
                         contentAlignment = Alignment.BottomEnd
                     ) {
                         Box(
                             modifier = Modifier
-                                .padding(8.dp)
-                                .size(24.dp)
+                                .padding(4.dp)
+                                .size(28.dp)
+                                .background(MaterialTheme.colorScheme.surface, CircleShape)
+                                .padding(2.dp)
                                 .background(MaterialTheme.colorScheme.primary, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
@@ -274,7 +283,7 @@ fun ProfileContent(
                 enabled = !state.isEditing,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 48.dp)
+                    .padding(horizontal = 24.dp)
                     .alpha(if (state.isEditing) 0.5f else 1f)
                     .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp)),
                 shape = RoundedCornerShape(8.dp),
@@ -297,7 +306,7 @@ fun ProfileContent(
                 readOnly = !state.isEditing,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 48.dp)
+                    .padding(horizontal = 24.dp)
                     .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp)),
                 shape = RoundedCornerShape(8.dp),
                 colors = TextFieldDefaults.colors(
@@ -316,7 +325,7 @@ fun ProfileContent(
                 readOnly = !state.isEditing,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 48.dp)
+                    .padding(horizontal = 24.dp)
                     .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp)),
                 shape = RoundedCornerShape(8.dp),
                 colors = TextFieldDefaults.colors(
@@ -336,7 +345,7 @@ fun ProfileContent(
                 minLines = 3,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 48.dp)
+                    .padding(horizontal = 24.dp)
                     .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp)),
                 shape = RoundedCornerShape(8.dp),
                 colors = TextFieldDefaults.colors(
@@ -351,7 +360,7 @@ fun ProfileContent(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 42.dp, vertical = 16.dp),
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Button(

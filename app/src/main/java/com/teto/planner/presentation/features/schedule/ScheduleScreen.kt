@@ -42,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.teto.planner.domain.model.meeting.Meeting
+import com.teto.planner.presentation.common.EditMeetingDialog
 import com.teto.planner.presentation.common.MeetingDetailsDialog
 import com.teto.planner.presentation.common.SharedCalendar
 import java.time.LocalDate
@@ -122,9 +123,22 @@ fun ScheduleScreen(
                     state.selectedMeeting?.let { meeting ->
                         MeetingDetailsDialog(
                             meeting = meeting,
+                            currentUserId = state.currentUserId,
                             isLoading = state.isMeetingDetailsLoading,
                             error = state.meetingDetailsError,
-                            onDismiss = viewModel::closeMeetingDetails
+                            onDismiss = viewModel::closeMeetingDetails,
+                            onEditClick = viewModel::onEditMeetingClick
+                        )
+                    }
+
+                    state.meetingToEdit?.let { meeting ->
+                        EditMeetingDialog(
+                            meeting = meeting,
+                            isLoading = state.isLoading,
+                            onDismiss = viewModel::closeEditDialog,
+                            onSave = { title, description ->
+                                viewModel.updateMeeting(meeting.id, title, description)
+                            }
                         )
                     }
                 }

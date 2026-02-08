@@ -22,13 +22,22 @@ class ScheduleViewModel @Inject constructor(
     val uiState: StateFlow<ScheduleUiState> = _uiState.asStateFlow()
 
     private val loadedMonths = mutableSetOf<YearMonth>()
+    private var currentUserId: String? = null
 
     init {
         loadInitialData()
     }
 
     private fun loadInitialData() {
-        loadMeetingsForMonth(LocalDate.now())
+        viewModelScope.launch {
+            val userResult = repository.getCurrentUserId()
+            userResult.onSuccess { id ->
+                currentUserId = id
+                loadMeetingsForMonth(LocalDate.now())
+            }.onFailure {
+                _uiState.update { ScheduleUiState.Error("Не удалось загрузить профиль пользователя") }
+            }
+        }
     }
 
     fun onDateSelected(date: LocalDate) {
@@ -51,6 +60,8 @@ class ScheduleViewModel @Inject constructor(
     }
 
     fun loadMeetingsForMonth(date: LocalDate, isPullToRefresh: Boolean = false) {
+        val userId = currentUserId ?: return
+
         val monthToLoad = YearMonth.from(date)
 
         if (!isPullToRefresh && loadedMonths.contains(monthToLoad)) {
@@ -117,6 +128,7 @@ class ScheduleViewModel @Inject constructor(
                 _uiState.update {
                     ScheduleUiState.Success(
                         meetings = updatedList,
+                        currentUserId = userId,
                         selectedDate = currentDate,
                         isLoading = false,
                         isRefreshing = false
@@ -140,6 +152,53 @@ class ScheduleViewModel @Inject constructor(
         val currentState = _uiState.value as? ScheduleUiState.Success ?: return
         _uiState.update {
             currentState.copy(selectedMeeting = null, isMeetingDetailsLoading = false)
+        }
+    }
+
+    fun onEditMeetingClick() {
+        val currentState = _uiState.value as? ScheduleUiState.Success ?: return
+        val meeting = currentState.selectedMeeting ?: return
+
+        _uiState.update {
+            currentState.copy(
+                selectedMeeting = null,
+                meetingToEdit = meeting
+            )
+        }
+    }
+
+    fun closeEditDialog() {
+        val currentState = _uiState.value as? ScheduleUiState.Success ?: return
+        _uiState.update { currentState.copy(meetingToEdit = null) }
+    }
+
+    fun updateMeeting(meetingId: String, title: String, description: String) {
+        val currentState = _uiState.value as? ScheduleUiState.Success ?: return
+
+        viewModelScope.launch {
+            _uiState.update { currentState.copy(isLoading = true) }
+
+            val result = repository.updateMeeting(
+                meetingId = meetingId,
+                title = title,
+                description = description
+            )
+
+            result.onSuccess { updatedMeeting ->
+                val updatedList = currentState.meetings.map {
+                    if (it.id == updatedMeeting.id) updatedMeeting else it
+                }
+
+                _uiState.update {
+                    currentState.copy(
+                        meetings = updatedList,
+                        meetingToEdit = null,
+                        isLoading = false
+                    )
+                }
+            }.onFailure { error ->
+                _uiState.update { currentState.copy(isLoading = false) }
+            }
         }
     }
 }

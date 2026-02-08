@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Warning
@@ -26,6 +27,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -46,10 +48,12 @@ import com.teto.planner.domain.model.user.UserSummary
 @Composable
 fun MeetingDetailsDialog(
     meeting: Meeting,
+    currentUserId: String,
     isLoading: Boolean,
     error: String? = null,
     onDismiss: () -> Unit,
-    onParticipantClick: (UserSummary) -> Unit = {}
+    onParticipantClick: (UserSummary) -> Unit = {},
+    onEditClick: () -> Unit
 ) {
     var userDetailsToShow by remember { mutableStateOf<UserSummary?>(null) }
 
@@ -70,6 +74,17 @@ fun MeetingDetailsDialog(
                         style = MaterialTheme.typography.headlineSmall,
                         modifier = Modifier.weight(1f)
                     )
+
+                    if (meeting.organizer.id == currentUserId) {
+                        IconButton(onClick = onEditClick) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Редактировать",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
                     if (isLoading) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
