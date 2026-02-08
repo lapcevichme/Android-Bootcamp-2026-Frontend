@@ -3,7 +3,7 @@ package com.teto.planner.presentation.features.invitations
 import com.teto.planner.domain.model.meeting.Invitation
 
 sealed interface InvitationUiState {
-    object Loading : InvitationUiState
+    data object Loading : InvitationUiState
 
     data class Success(
         val invitations: List<Invitation> = emptyList(),
@@ -11,5 +11,5 @@ sealed interface InvitationUiState {
 
     data class Error(val message: String) : InvitationUiState
 
-    object Empty : InvitationUiState
+    data object Empty : InvitationUiState
 }

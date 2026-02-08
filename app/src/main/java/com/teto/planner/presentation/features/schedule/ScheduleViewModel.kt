@@ -30,20 +30,28 @@ class ScheduleViewModel @Inject constructor(
 
     private fun loadInitialData() {
         viewModelScope.launch {
-            val userResult = repository.getCurrentUserId()
-            userResult.onSuccess { id ->
-                currentUserId = id
-                loadMeetingsForMonth(LocalDate.now())
-            }.onFailure {
-                _uiState.update { ScheduleUiState.Error("Не удалось загрузить профиль пользователя") }
-            }
+            repository.getCurrentUserId()
+                .onSuccess { id ->
+                    currentUserId = id
+                    loadMeetingsForMonth(LocalDate.now())
+                }
+                .onFailure {
+                    _uiState.update { ScheduleUiState.Error("Не удалось загрузить профиль пользователя") }
+                }
         }
     }
 
     fun onDateSelected(date: LocalDate) {
-        val currentState = _uiState.value
-        if (currentState is ScheduleUiState.Success) {
-            _uiState.update { currentState.copy(selectedDate = date) }
+        _uiState.update { currentState ->
+            if (currentState is ScheduleUiState.Success) {
+                val newMeetingsForDate = currentState.meetings.filter { it.date == date }
+                currentState.copy(
+                    selectedDate = date,
+                    meetingsForSelectedDate = newMeetingsForDate
+                )
+            } else {
+                currentState
+            }
         }
     }
 
@@ -52,7 +60,6 @@ class ScheduleViewModel @Inject constructor(
         if (currentState is ScheduleUiState.Success) {
             val monthToRefresh = YearMonth.from(currentState.selectedDate)
             loadedMonths.remove(monthToRefresh)
-
             loadMeetingsForMonth(currentState.selectedDate, isPullToRefresh = true)
         } else {
             loadInitialData()
@@ -61,7 +68,6 @@ class ScheduleViewModel @Inject constructor(
 
     fun loadMeetingsForMonth(date: LocalDate, isPullToRefresh: Boolean = false) {
         val userId = currentUserId ?: return
-
         val monthToLoad = YearMonth.from(date)
 
         if (!isPullToRefresh && loadedMonths.contains(monthToLoad)) {
@@ -69,22 +75,26 @@ class ScheduleViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            val currentState = uiState.value
-
-            val currentMeetings = if (currentState is ScheduleUiState.Success) {
-                _uiState.update {
+            _uiState.update { currentState ->
+                if (currentState is ScheduleUiState.Success) {
                     currentState.copy(
                         isRefreshing = isPullToRefresh,
                         isLoading = !isPullToRefresh
                     )
+                } else {
+                    ScheduleUiState.Loading
                 }
-                currentState.meetings
+            }
+
+            val currentStateForMerge = _uiState.value
+            val currentMeetings = if (currentStateForMerge is ScheduleUiState.Success) {
+                currentStateForMerge.meetings
             } else {
-                _uiState.update { ScheduleUiState.Loading }
                 emptyList()
             }
 
-            val currentDate = (currentState as? ScheduleUiState.Success)?.selectedDate ?: date
+            val currentlySelectedDate = (currentStateForMerge as? ScheduleUiState.Success)?.selectedDate
+
             val newMeetings = mutableListOf<Meeting>()
             var currentPage = 0
             var hasNextPage = true
@@ -115,9 +125,7 @@ class ScheduleViewModel @Inject constructor(
             }
 
             if (errorOccurred != null && currentMeetings.isEmpty() && newMeetings.isEmpty()) {
-                _uiState.update {
-                    ScheduleUiState.Error(errorOccurred)
-                }
+                _uiState.update { ScheduleUiState.Error(errorOccurred!!) }
             } else {
                 if (errorOccurred == null) {
                     loadedMonths.add(monthToLoad)
@@ -125,11 +133,16 @@ class ScheduleViewModel @Inject constructor(
 
                 val updatedList = (newMeetings + currentMeetings).distinctBy { it.id }
 
+                val targetDate = currentlySelectedDate ?: date
+
+                val meetingsForDate = updatedList.filter { it.date == targetDate }
+
                 _uiState.update {
                     ScheduleUiState.Success(
                         meetings = updatedList,
+                        meetingsForSelectedDate = meetingsForDate,
                         currentUserId = userId,
-                        selectedDate = currentDate,
+                        selectedDate = targetDate,
                         isLoading = false,
                         isRefreshing = false
                     )
@@ -139,44 +152,51 @@ class ScheduleViewModel @Inject constructor(
     }
 
     fun openMeetingDetails(summaryMeeting: Meeting) {
-        val currentState = _uiState.value as? ScheduleUiState.Success ?: return
-        _uiState.update {
-            currentState.copy(
-                selectedMeeting = summaryMeeting,
-                isMeetingDetailsLoading = false
-            )
+        _uiState.update { currentState ->
+            if (currentState is ScheduleUiState.Success) {
+                currentState.copy(
+                    selectedMeeting = summaryMeeting,
+                    isMeetingDetailsLoading = false
+                )
+            } else currentState
         }
     }
 
     fun closeMeetingDetails() {
-        val currentState = _uiState.value as? ScheduleUiState.Success ?: return
-        _uiState.update {
-            currentState.copy(selectedMeeting = null, isMeetingDetailsLoading = false)
+        _uiState.update { currentState ->
+            if (currentState is ScheduleUiState.Success) {
+                currentState.copy(selectedMeeting = null, isMeetingDetailsLoading = false)
+            } else currentState
         }
     }
 
     fun onEditMeetingClick() {
-        val currentState = _uiState.value as? ScheduleUiState.Success ?: return
-        val meeting = currentState.selectedMeeting ?: return
-
-        _uiState.update {
-            currentState.copy(
-                selectedMeeting = null,
-                meetingToEdit = meeting
-            )
+        _uiState.update { currentState ->
+            if (currentState is ScheduleUiState.Success) {
+                val meeting = currentState.selectedMeeting ?: return@update currentState
+                currentState.copy(
+                    selectedMeeting = null,
+                    meetingToEdit = meeting
+                )
+            } else currentState
         }
     }
 
     fun closeEditDialog() {
-        val currentState = _uiState.value as? ScheduleUiState.Success ?: return
-        _uiState.update { currentState.copy(meetingToEdit = null) }
+        _uiState.update { currentState ->
+            if (currentState is ScheduleUiState.Success) {
+                currentState.copy(meetingToEdit = null)
+            } else currentState
+        }
     }
 
     fun updateMeeting(meetingId: String, title: String, description: String) {
-        val currentState = _uiState.value as? ScheduleUiState.Success ?: return
-
         viewModelScope.launch {
-            _uiState.update { currentState.copy(isLoading = true) }
+            _uiState.update { currentState ->
+                if (currentState is ScheduleUiState.Success) {
+                    currentState.copy(isLoading = true)
+                } else currentState
+            }
 
             val result = repository.updateMeeting(
                 meetingId = meetingId,
@@ -185,19 +205,27 @@ class ScheduleViewModel @Inject constructor(
             )
 
             result.onSuccess { updatedMeeting ->
-                val updatedList = currentState.meetings.map {
-                    if (it.id == updatedMeeting.id) updatedMeeting else it
-                }
+                _uiState.update { currentState ->
+                    if (currentState is ScheduleUiState.Success) {
+                        val updatedList = currentState.meetings.map {
+                            if (it.id == updatedMeeting.id) updatedMeeting else it
+                        }
+                        val updatedFiltered = updatedList.filter { it.date == currentState.selectedDate }
 
-                _uiState.update {
-                    currentState.copy(
-                        meetings = updatedList,
-                        meetingToEdit = null,
-                        isLoading = false
-                    )
+                        currentState.copy(
+                            meetings = updatedList,
+                            meetingsForSelectedDate = updatedFiltered,
+                            meetingToEdit = null,
+                            isLoading = false
+                        )
+                    } else currentState
                 }
             }.onFailure { error ->
-                _uiState.update { currentState.copy(isLoading = false) }
+                _uiState.update { currentState ->
+                    if (currentState is ScheduleUiState.Success) {
+                        currentState.copy(isLoading = false)
+                    } else currentState
+                }
             }
         }
     }

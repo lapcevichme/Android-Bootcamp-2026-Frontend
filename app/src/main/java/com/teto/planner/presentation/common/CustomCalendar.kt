@@ -44,16 +44,16 @@ fun SharedCalendar(
     meetingsByDate: Map<LocalDate, List<Meeting>>,
     modifier: Modifier = Modifier
 ) {
-    val currentMonth = remember { YearMonth.now() }
-    val startMonth =
-        remember { currentMonth.minusMonths(24) }
-    val endMonth = remember { currentMonth.plusMonths(24) }
+    val initialMonth = remember { YearMonth.from(selectedDate) }
+
+    val startMonth = remember { initialMonth.minusMonths(24) }
+    val endMonth = remember { initialMonth.plusMonths(24) }
     val firstDayOfWeek = remember { firstDayOfWeekFromLocale() }
 
     val state = rememberCalendarState(
         startMonth = startMonth,
         endMonth = endMonth,
-        firstVisibleMonth = currentMonth,
+        firstVisibleMonth = initialMonth,
         firstDayOfWeek = firstDayOfWeek,
         outDateStyle = OutDateStyle.EndOfGrid
     )

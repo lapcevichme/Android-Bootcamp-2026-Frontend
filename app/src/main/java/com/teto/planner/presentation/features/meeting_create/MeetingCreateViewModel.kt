@@ -49,17 +49,9 @@ class MeetingCreateViewModel @Inject constructor(
     private fun loadUser() {
         viewModelScope.launch {
             userRepository.getMe().onSuccess { userMe ->
-                updateSuccessState {
-                    it.copy(
-                        userMe = userMe
-                    )
-                }
+                updateSuccessState { it.copy(userMe = userMe) }
             }.onFailure {
-                updateSuccessState {
-                    it.copy(
-                        userMe = null
-                    )
-                }
+                updateSuccessState { it.copy(userMe = null) }
             }
         }
     }
@@ -118,7 +110,6 @@ class MeetingCreateViewModel @Inject constructor(
         if (!state.canLoadMoreUsers) return
 
         val userMeId = state.userMe?.id
-
         val nextPage = state.searchPage + 1
         val trimmedQuery = state.searchQuery.trim()
 
@@ -138,14 +129,11 @@ class MeetingCreateViewModel @Inject constructor(
                 }
                 val foundMeOnThisPage = pagedList.items.any { it.id == userMeId }
                 val filteredList = pagedList.items.filterNot { it.id == userMeId }
-                val filteredPagedList = PagedList(
-                    items = filteredList,
-                    meta = pagedList.meta
-                )
+
                 updateSuccessState { currentState ->
                     currentState.copy(
-                        searchResults = currentState.searchResults + filteredPagedList.items,
-                        searchMeta = filteredPagedList.meta,
+                        searchResults = currentState.searchResults + filteredList,
+                        searchMeta = pagedList.meta,
                         searchPage = nextPage,
                         isLoadingMoreUsers = false,
                         isUserMeDeleted = currentState.isUserMeDeleted || foundMeOnThisPage
@@ -160,17 +148,17 @@ class MeetingCreateViewModel @Inject constructor(
     fun onParticipantSelected(user: UserSummary) {
         updateSuccessState { state ->
             if (state.selectedParticipants.any { it.id == user.id }) {
-                return@updateSuccessState state.copy(
+                state.copy(
+                    searchQuery = "",
+                    searchResults = emptyList()
+                )
+            } else {
+                state.copy(
+                    selectedParticipants = state.selectedParticipants + user,
                     searchQuery = "",
                     searchResults = emptyList()
                 )
             }
-
-            state.copy(
-                selectedParticipants = state.selectedParticipants + user,
-                searchQuery = "",
-                searchResults = emptyList()
-            )
         }
         updateIntersectionData()
     }
@@ -197,13 +185,13 @@ class MeetingCreateViewModel @Inject constructor(
     }
 
     private fun updateIntersectionData() {
-        val state = _uiState.value as? MeetingCreateUiState.Success ?: return
-        if (state.selectedParticipants.isEmpty()) {
-            updateSuccessState { it.copy(intersectionResponse = null) }
-            return
-        }
-
         viewModelScope.launch {
+            val state = _uiState.value as? MeetingCreateUiState.Success
+            if (state == null || state.selectedParticipants.isEmpty()) {
+                updateSuccessState { it.copy(intersectionResponse = null) }
+                return@launch
+            }
+
             meetingRepository.getIntersection(
                 date = state.selectedDate,
                 userIds = state.selectedParticipants.map { it.id }
@@ -219,11 +207,14 @@ class MeetingCreateViewModel @Inject constructor(
     }
 
     private fun updateAvailableRooms() {
-        val state = _uiState.value as? MeetingCreateUiState.Success ?: return
-        val hour = state.selectedHour ?: return
-
-        updateSuccessState { it.copy(isLoadingRooms = true) }
         viewModelScope.launch {
+            val state = _uiState.value as? MeetingCreateUiState.Success
+            val hour = state?.selectedHour
+
+            if (state == null || hour == null) return@launch
+
+            updateSuccessState { it.copy(isLoadingRooms = true) }
+
             roomRepository.listAvailableRooms(
                 date = state.selectedDate,
                 startHour = hour
@@ -258,6 +249,7 @@ class MeetingCreateViewModel @Inject constructor(
         if (!state.canSubmit) return
 
         updateSuccessState { it.copy(isSubmitting = true) }
+
         viewModelScope.launch {
             meetingRepository.createMeeting(
                 date = state.selectedDate,

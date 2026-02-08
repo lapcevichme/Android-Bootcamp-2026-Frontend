@@ -8,6 +8,7 @@ sealed interface ScheduleUiState {
 
     data class Success(
         val meetings: List<Meeting>,
+        val meetingsForSelectedDate: List<Meeting>,
         val currentUserId: String,
         val selectedDate: LocalDate = LocalDate.now(),
         val selectedMeeting: Meeting? = null,
@@ -17,8 +18,6 @@ sealed interface ScheduleUiState {
         val isLoading: Boolean = false,
         val isRefreshing: Boolean = false
     ) : ScheduleUiState {
-        val meetingsForSelectedDate: List<Meeting>
-            get() = meetings.filter { it.date == selectedDate }
         val meetingsByDate: Map<LocalDate, List<Meeting>>
             get() = meetings.groupBy { it.date }
     }
