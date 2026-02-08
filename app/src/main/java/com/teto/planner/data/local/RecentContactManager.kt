@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.teto.planner.domain.model.user.LoadStatus
 import com.teto.planner.domain.model.user.UserSummary
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -65,11 +66,22 @@ class RecentContactManager @Inject constructor(
             val users = mutableListOf<UserSummary>()
             for (i in 0 until jsonArray.length()) {
                 val obj = jsonArray.getJSONObject(i)
+
+                val statusStr = obj.optString("loadStatus", "")
+                val loadStatus = if (statusStr.isNotEmpty()) {
+                    try { LoadStatus.valueOf(statusStr) } catch (e: Exception) { LoadStatus.LOW }
+                } else LoadStatus.LOW
+
                 users.add(
                     UserSummary(
                         id = obj.getString("id"),
                         name = obj.getString("name"),
-                        avatarUrl = if (obj.has("avatarUrl") && !obj.isNull("avatarUrl")) obj.getString("avatarUrl") else null
+                        avatarUrl = if (obj.has("avatarUrl") && !obj.isNull("avatarUrl")) obj.getString("avatarUrl") else null,
+                        telegram = if (obj.has("telegram") && !obj.isNull("telegram")) obj.getString("telegram") else null,
+                        bio = if (obj.has("bio") && !obj.isNull("bio")) obj.getString("bio") else null,
+                        busyHours = obj.optInt("busyHours", 0),
+                        loadStatus = loadStatus,
+                        updatedAt = if (obj.has("updatedAt") && !obj.isNull("updatedAt")) obj.getString("updatedAt") else null
                     )
                 )
             }
@@ -87,7 +99,15 @@ class RecentContactManager @Inject constructor(
                 val obj = JSONObject()
                 obj.put("id", user.id)
                 obj.put("name", user.name)
-                obj.put("avatarUrl", user.avatarUrl)
+
+                if (user.avatarUrl != null) obj.put("avatarUrl", user.avatarUrl)
+                if (user.telegram != null) obj.put("telegram", user.telegram)
+                if (user.bio != null) obj.put("bio", user.bio)
+                if (user.updatedAt != null) obj.put("updatedAt", user.updatedAt)
+
+                obj.put("busyHours", user.busyHours)
+                obj.put("loadStatus", user.loadStatus.name)
+
                 jsonArray.put(obj)
             }
             jsonArray.toString()

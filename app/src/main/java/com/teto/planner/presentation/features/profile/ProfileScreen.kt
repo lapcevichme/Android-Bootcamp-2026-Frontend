@@ -215,10 +215,8 @@ fun ProfileContent(
 
                     val fullAvatarUrl = remember(state.user.avatarUrl, state.user.updatedAt) {
                         state.user.avatarUrl?.let { url ->
-                            val base =
-                                if (url.startsWith("/")) "https://teto-planner.fly.dev$url" else url
                             val version = state.user.updatedAt?.hashCode() ?: ""
-                            "$base?v=$version"
+                            "$url?v=$version"
                         }
                     }
 
