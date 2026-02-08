@@ -3,6 +3,7 @@ package com.teto.planner.presentation.features.invitations
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
@@ -190,7 +191,8 @@ fun SwipeableCardItem(
             modifier = Modifier.fillMaxSize(),
             shape = RoundedCornerShape(24.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 Box(
@@ -371,14 +373,13 @@ fun ErrorInvitationDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Обновить")
+                Text(if (organizer == null) "Обновить" else "Ок")
             }
         },
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 6.dp
     )
 }
-
 
 @Preview(showSystemUi = true)
 @Composable
