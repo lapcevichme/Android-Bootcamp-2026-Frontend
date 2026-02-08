@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.teto.planner.domain.model.meeting.Invitation
 import com.teto.planner.domain.model.user.ParticipantStatus
+import com.teto.planner.domain.model.user.UserSummary
 import com.teto.planner.domain.repository.MeetingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
@@ -12,6 +13,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+data class ActionError(
+    val message: String,
+    val organizer: UserSummary?
+)
+
 @HiltViewModel
 class InvitationViewModel @Inject constructor(
     private val repository: MeetingRepository
@@ -19,6 +25,9 @@ class InvitationViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow<InvitationUiState>(InvitationUiState.Loading)
     val uiState: StateFlow<InvitationUiState> = _uiState.asStateFlow()
+
+    private val _actionError = MutableStateFlow<ActionError?>(null)
+    val actionError: StateFlow<ActionError?> = _actionError.asStateFlow()
 
     init {
         loadInvitations()
@@ -61,9 +70,17 @@ class InvitationViewModel @Inject constructor(
             repository.respondToInvitation(
                 meetingId = invitation.meeting.id,
                 status = newStatus
-            ).onFailure {
-                loadInvitations()
+            ).onFailure { error ->
+                _actionError.value = ActionError(
+                    message = error.message ?: "Ошибка обновления статуса",
+                    organizer = invitation.meeting.organizer
+                )
             }
         }
+    }
+
+    fun clearErrorAction() {
+        _actionError.value = null
+        loadInvitations()
     }
 }

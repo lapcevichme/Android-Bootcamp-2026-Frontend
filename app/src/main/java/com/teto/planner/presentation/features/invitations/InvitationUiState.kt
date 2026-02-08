@@ -6,7 +6,7 @@ sealed interface InvitationUiState {
     object Loading : InvitationUiState
 
     data class Success(
-        val invitations: List<Invitation> = emptyList()
+        val invitations: List<Invitation> = emptyList(),
     ) : InvitationUiState
 
     data class Error(val message: String) : InvitationUiState

@@ -8,6 +8,7 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,26 +19,37 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.teto.planner.domain.model.meeting.Invitation
+import com.teto.planner.domain.model.user.UserSummary
+import com.teto.planner.presentation.common.openTelegramChat
 import com.teto.planner.presentation.theme.AppTheme
 import kotlinx.coroutines.launch
 import java.time.format.DateTimeFormatter
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-
-// todo - сделать кликабельными карточки? Мало инфы на них на самом деле
 @Composable
 fun InvitationScreen(
     viewModel: InvitationViewModel,
     onProfileClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val actionError by viewModel.actionError.collectAsState()
+
+    if (actionError != null) {
+        val errorData = actionError!!
+        ErrorInvitationDialog(
+            message = errorData.message,
+            organizer = errorData.organizer,
+            onDismiss = { viewModel.clearErrorAction() }
+        )
+    }
 
     InvitationContent(
         uiState = uiState,
@@ -303,6 +315,68 @@ fun EmptyState() {
             )
         }
     }
+}
+
+@Composable
+fun ErrorInvitationDialog(
+    message: String,
+    organizer: UserSummary?,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error
+            )
+        },
+        title = {
+            Text(
+                text = "Ошибка",
+                textAlign = TextAlign.Center
+            )
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+
+                if (organizer?.telegram != null && organizer.telegram.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { context.openTelegramChat(organizer.telegram) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Send,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Написать организатору")
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Обновить")
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 6.dp
+    )
 }
 
 
