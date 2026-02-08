@@ -2,6 +2,7 @@ package com.teto.planner.presentation.features.meeting_create
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.teto.planner.domain.model.common.PagedList
 import com.teto.planner.domain.model.user.UserSummary
 import com.teto.planner.domain.repository.MeetingRepository
 import com.teto.planner.domain.repository.RoomRepository
@@ -30,7 +31,31 @@ class MeetingCreateViewModel @Inject constructor(
     private var searchJob: Job? = null
     private val pageSize = 20
 
+    init {
+        loadUser()
+    }
+
+    private fun loadUser() {
+        viewModelScope.launch {
+            userRepository.getMe().onSuccess { userMe ->
+                updateSuccessState {
+                    it.copy(
+                        userMe = userMe
+                    )
+                }
+            }.onFailure {
+                updateSuccessState {
+                    it.copy(
+                        userMe = null
+                    )
+                }
+            }
+        }
+    }
+
     fun onSearchQueryChanged(query: String) {
+        val trimmedQuery = query.trim()
+
         updateSuccessState {
             it.copy(
                 searchQuery = query,
@@ -38,6 +63,9 @@ class MeetingCreateViewModel @Inject constructor(
                 searchResults = if (query.isBlank()) emptyList() else it.searchResults
             )
         }
+
+        val state = _uiState.value as? MeetingCreateUiState.Success ?: return
+        val userMeId = state.userMe?.id
 
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
@@ -49,18 +77,26 @@ class MeetingCreateViewModel @Inject constructor(
 
             updateSuccessState { it.copy(isSearching = true) }
 
-            userRepository.listUsers(query = query, page = 0, size = pageSize).onSuccess { pagedList ->
-                updateSuccessState {
-                    it.copy(
-                        searchResults = pagedList.items,
-                        searchMeta = pagedList.meta,
-                        isSearching = false,
-                        searchPage = 0
+            userRepository.listUsers(query = trimmedQuery, page = 0, size = pageSize)
+                .onSuccess { pagedList ->
+                    val foundMe = pagedList.items.any { it.id == userMeId}
+                    val filteredList = pagedList.items.filterNot { it.id == userMeId }
+                    val filteredPagedList = PagedList(
+                        items = filteredList,
+                        meta = pagedList.meta
                     )
+                    updateSuccessState {
+                        it.copy(
+                            searchResults = filteredPagedList.items,
+                            searchMeta = filteredPagedList.meta,
+                            isSearching = false,
+                            searchPage = 0,
+                            isUserMeDeleted = foundMe
+                        )
+                    }
+                }.onFailure {
+                    updateSuccessState { it.copy(isSearching = false) }
                 }
-            }.onFailure {
-                updateSuccessState { it.copy(isSearching = false) }
-            }
         }
     }
 
@@ -68,22 +104,37 @@ class MeetingCreateViewModel @Inject constructor(
         val state = _uiState.value as? MeetingCreateUiState.Success ?: return
         if (!state.canLoadMoreUsers) return
 
+        val userMeId = state.userMe?.id
+
         val nextPage = state.searchPage + 1
+
+        val trimmedQuery = state.searchQuery.trim()
 
         updateSuccessState { it.copy(isLoadingMoreUsers = true) }
 
         viewModelScope.launch {
             userRepository.listUsers(
-                query = state.searchQuery,
+                query = trimmedQuery,
                 page = nextPage,
                 size = pageSize
             ).onSuccess { pagedList ->
+                if (pagedList.items.isEmpty()) {
+                    updateSuccessState { it.copy(isLoadingMoreUsers = false) }
+                    return@onSuccess
+                }
+                val foundMeOnThisPage = pagedList.items.any { it.id == userMeId }
+                val filteredList = pagedList.items.filterNot { it.id == userMeId }
+                val filteredPagedList = PagedList(
+                    items = filteredList,
+                    meta = pagedList.meta
+                )
                 updateSuccessState { currentState ->
                     currentState.copy(
-                        searchResults = currentState.searchResults + pagedList.items,
-                        searchMeta = pagedList.meta,
+                        searchResults = currentState.searchResults + filteredPagedList.items,
+                        searchMeta = filteredPagedList.meta,
                         searchPage = nextPage,
-                        isLoadingMoreUsers = false
+                        isLoadingMoreUsers = false,
+                        isUserMeDeleted = currentState.isUserMeDeleted || foundMeOnThisPage
                     )
                 }
             }.onFailure {

@@ -3,6 +3,7 @@ package com.teto.planner.presentation.features.meeting_create
 import com.teto.planner.domain.model.common.PageMeta
 import com.teto.planner.domain.model.common.Room
 import com.teto.planner.domain.model.meeting.IntersectionResponse
+import com.teto.planner.domain.model.user.UserMe
 import com.teto.planner.domain.model.user.UserSummary
 import java.time.LocalDate
 
@@ -17,6 +18,9 @@ sealed interface MeetingCreateUiState {
         val isSearching: Boolean = false,
         val isLoadingMoreUsers: Boolean = false,
 
+        val isUserMeDeleted: Boolean = false,
+
+        val userMe: UserMe? = null,
         val selectedParticipants: List<UserSummary> = emptyList(),
 
         val selectedDate: LocalDate = LocalDate.now(),
@@ -36,7 +40,6 @@ sealed interface MeetingCreateUiState {
     ) : MeetingCreateUiState {
         val selectedRoom: Room?
             get() = availableRooms.find { it.id == selectedRoomId }
-
         val isCapacityValid: Boolean
             get() = selectedRoom?.let { room ->
                 (selectedParticipants.size + 1) <= room.capacity
@@ -52,7 +55,7 @@ sealed interface MeetingCreateUiState {
             get() = !isSearching &&
                     !isLoadingMoreUsers &&
                     searchMeta != null &&
-                    searchResults.size < searchMeta.total
+                    searchMeta.hasNext
     }
 
     data class Error(val message: String) : MeetingCreateUiState

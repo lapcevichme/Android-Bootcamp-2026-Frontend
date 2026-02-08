@@ -266,7 +266,7 @@ private fun SuccessLayout(
                 modifier = Modifier.fillMaxWidth(),
                 query = state.searchQuery,
                 onQueryChange = onSearchQueryChanged,
-                onSearch = { searchExpanded = false },
+                onSearch = { },
                 active = searchExpanded,
                 onActiveChange = { searchExpanded = it },
                 placeholder = { Text("Добавить участников") },
@@ -319,7 +319,7 @@ private fun SuccessLayout(
                         )
                     }
 
-                    if (state.canLoadMoreUsers) {
+                    if (state.canLoadMoreUsers || state.isLoadingMoreUsers) {
                         item {
                             Box(
                                 modifier = Modifier
@@ -331,8 +331,10 @@ private fun SuccessLayout(
                                     modifier = Modifier.size(24.dp),
                                     strokeWidth = 2.dp
                                 )
-                                LaunchedEffect(Unit) {
-                                    onLoadMoreUsers()
+                                LaunchedEffect(state.searchPage) {
+                                    if (!state.isLoadingMoreUsers && state.canLoadMoreUsers) {
+                                        onLoadMoreUsers()
+                                    }
                                 }
                             }
                         }
