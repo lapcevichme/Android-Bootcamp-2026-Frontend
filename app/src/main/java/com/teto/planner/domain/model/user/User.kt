@@ -8,7 +8,8 @@ data class User(
     val name: String,
     val bio: String?,
     val telegram: String?,
-    val avatarUrl: String?
+    val avatarUrl: String?,
+    val updatedAt: String?
 )
 
 data class UserMe(
@@ -18,7 +19,8 @@ data class UserMe(
     val bio: String?,
     val telegram: String?,
     val avatarUrl: String?,
-    val roles: List<Role>
+    val roles: List<Role>,
+    val updatedAt: String?
 )
 
 data class UserSummary(
@@ -26,7 +28,8 @@ data class UserSummary(
     val name: String,
     val avatarUrl: String?,
     val busyHours: Int = 0,
-    val loadStatus: LoadStatus = LoadStatus.LOW
+    val loadStatus: LoadStatus = LoadStatus.LOW,
+    val updatedAt: String? = null
 )
 
 enum class LoadStatus { LOW, MEDIUM, HIGH }

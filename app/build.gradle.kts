@@ -59,12 +59,18 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
-    implementation(libs.coil.compose)
+//    implementation(libs.coil.compose)
     implementation(libs.material.icons)
     implementation(libs.material.icons.extended)
     implementation(libs.kizitonwose.calendar)
     implementation(libs.bundles.ktor.client)
     implementation(libs.androidx.datastore.preferences)
+    implementation("io.coil-kt.coil3:coil:3.3.0")
+    implementation("io.coil-kt.coil3:coil-compose:3.3.0")
+    implementation("io.coil-kt.coil3:coil-network-ktor3:3.3.0")
+    implementation("com.github.Tanish-Ranjan:crop-kit:1.1.0")
+
+    // todo вынести бред
 }
 
 

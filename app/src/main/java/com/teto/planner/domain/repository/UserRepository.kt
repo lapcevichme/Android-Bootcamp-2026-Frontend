@@ -14,4 +14,6 @@ interface UserRepository {
         page: Int = 0,
         size: Int = 50
     ): Result<PagedList<UserSummary>>
+
+    suspend fun uploadAvatar(bytes: ByteArray): Result<UserMe>
 }

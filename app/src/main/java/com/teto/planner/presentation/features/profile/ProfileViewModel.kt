@@ -40,6 +40,31 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
+    fun updateAvatar(imageBytes: ByteArray) {
+        val currentState = _uiState.value
+        if (currentState is ProfileScreenUiState.Success) {
+            viewModelScope.launch {
+                _uiState.value = currentState.copy(isAvatarUploading = true)
+                userRepository.uploadAvatar(imageBytes)
+                    .onSuccess { updatedUser ->
+                        val newState = _uiState.value
+                        if (newState is ProfileScreenUiState.Success) {
+                            _uiState.value = newState.copy(
+                                user = updatedUser,
+                                isAvatarUploading = false
+                            )
+                        }
+                    }
+                    .onFailure {
+                        val newState = _uiState.value
+                        if (newState is ProfileScreenUiState.Success) {
+                            _uiState.value = newState.copy(isAvatarUploading = false)
+                        }
+                    }
+            }
+        }
+    }
+
     fun startEditing() {
         val currentState = _uiState.value
         if (currentState is ProfileScreenUiState.Success) {

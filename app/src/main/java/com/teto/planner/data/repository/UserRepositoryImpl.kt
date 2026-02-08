@@ -13,10 +13,13 @@ import com.teto.planner.domain.repository.UserRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.patch
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType.Application.Json
+import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import javax.inject.Inject
 
@@ -42,6 +45,17 @@ class UserRepositoryImpl @Inject constructor(
                 setBody(request)
             }.body<UserMeDto>().toDomain()
         }
+
+    override suspend fun uploadAvatar(bytes: ByteArray): Result<UserMe> = runCatching {
+        client.put("api/me/avatar") {
+            header(HttpHeaders.ContentType, "image/jpeg")
+            setBody(bytes)
+        }
+
+        client.get("api/me")
+            .body<UserMeDto>()
+            .toDomain()
+    }
 
     override suspend fun listUsers(
         query: String?,
