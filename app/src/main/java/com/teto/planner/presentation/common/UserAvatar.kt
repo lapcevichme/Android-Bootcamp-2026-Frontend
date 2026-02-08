@@ -28,9 +28,7 @@ fun UserAvatar(
 ) {
     val context = LocalContext.current
     val model = remember(url) {
-        if (!url.isNullOrBlank()) {
-            if (url.startsWith("/")) "https://teto-planner.fly.dev$url" else url
-        } else null
+        if (!url.isNullOrBlank()) url else null
     }
 
     if (model != null) {
