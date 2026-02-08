@@ -43,6 +43,8 @@ fun UserSummaryDto.toDomain() = UserSummary(
     id = id,
     name = name,
     avatarUrl = avatarUrl,
+    telegram = telegramNick,
+    bio = bio,
     busyHours = busyHours ?: 0,
     loadStatus = try {
         LoadStatus.valueOf(loadStatus ?: "LOW")

@@ -28,7 +28,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.EditCalendar
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material3.Button
@@ -79,6 +78,9 @@ import com.teto.planner.domain.model.meeting.IntersectionResponse
 import com.teto.planner.domain.model.meeting.IntersectionSlot
 import com.teto.planner.domain.model.meeting.IntersectionSlotStatus
 import com.teto.planner.domain.model.user.UserSummary
+import com.teto.planner.presentation.common.UserAvatar
+import com.teto.planner.presentation.common.UserDetailsDialog
+import com.teto.planner.presentation.common.getStatusColor
 import com.teto.planner.presentation.theme.AppTheme
 import java.time.Instant
 import java.time.LocalDate
@@ -136,6 +138,15 @@ fun MeetingCreateContent(
     onCreateMeeting: () -> Unit,
     onBack: () -> Unit
 ) {
+    var userDetailsToShow by remember { mutableStateOf<UserSummary?>(null) }
+
+    if (userDetailsToShow != null) {
+        UserDetailsDialog(
+            user = userDetailsToShow!!,
+            onDismiss = { userDetailsToShow = null }
+        )
+    }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -182,7 +193,8 @@ fun MeetingCreateContent(
                         onRoomSelected = onRoomSelected,
                         onTitleChanged = onTitleChanged,
                         onDescriptionChanged = onDescriptionChanged,
-                        onCreateMeeting = onCreateMeeting
+                        onCreateMeeting = onCreateMeeting,
+                        onShowUserDetails = { userDetailsToShow = it }
                     )
                 }
             }
@@ -203,7 +215,8 @@ private fun SuccessLayout(
     onRoomSelected: (String) -> Unit,
     onTitleChanged: (String) -> Unit,
     onDescriptionChanged: (String) -> Unit,
-    onCreateMeeting: () -> Unit
+    onCreateMeeting: () -> Unit,
+    onShowUserDetails: (UserSummary) -> Unit
 ) {
     var searchExpanded by rememberSaveable { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -295,10 +308,23 @@ private fun SuccessLayout(
                         ListItem(
                             headlineContent = { Text(user.name) },
                             leadingContent = {
-                                Icon(
-                                    Icons.Default.Person,
-                                    contentDescription = null
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .border(
+                                            width = 2.dp,
+                                            color = getStatusColor(user.loadStatus),
+                                            shape = CircleShape
+                                        )
+                                        .padding(2.dp)
+                                        .clip(CircleShape)
+                                        .clickable { onShowUserDetails(user) }
+                                ) {
+                                    UserAvatar(
+                                        url = user.avatarUrl,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
                             },
                             trailingContent = {
                                 if (isSelected) {
@@ -351,7 +377,8 @@ private fun SuccessLayout(
             items(state.selectedParticipants) { user ->
                 ParticipantCard(
                     user = user,
-                    onRemove = { onParticipantRemoved(user.id) }
+                    onRemove = { onParticipantRemoved(user.id) },
+                    onAvatarClick = { onShowUserDetails(user) }
                 )
             }
 
@@ -494,7 +521,11 @@ private fun SuccessLayout(
 }
 
 @Composable
-fun ParticipantCard(user: UserSummary, onRemove: () -> Unit) {
+fun ParticipantCard(
+    user: UserSummary,
+    onRemove: () -> Unit,
+    onAvatarClick: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
@@ -507,13 +538,19 @@ fun ParticipantCard(user: UserSummary, onRemove: () -> Unit) {
             Box(
                 modifier = Modifier
                     .size(40.dp)
-                    .border(width = 2.dp, color = Color.Green, shape = CircleShape)
+                    .border(
+                        width = 2.dp,
+                        color = getStatusColor(user.loadStatus),
+                        shape = CircleShape
+                    )
                     .padding(2.dp)
                     .clip(CircleShape)
-                    .background(color = MaterialTheme.colorScheme.surface),
-                contentAlignment = Alignment.Center
+                    .clickable(onClick = onAvatarClick)
             ) {
-                Icon(imageVector = Icons.Default.Person, contentDescription = null)
+                UserAvatar(
+                    url = user.avatarUrl,
+                    modifier = Modifier.fillMaxSize()
+                )
             }
             Spacer(modifier = Modifier.width(12.dp))
             Text(

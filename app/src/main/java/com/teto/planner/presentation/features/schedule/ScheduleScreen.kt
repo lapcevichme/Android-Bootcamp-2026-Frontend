@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.teto.planner.domain.model.meeting.Meeting
+import com.teto.planner.presentation.common.MeetingDetailsDialog
 import com.teto.planner.presentation.common.SharedCalendar
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
