@@ -1,5 +1,6 @@
 package com.teto.planner.data.repository
 
+import com.teto.planner.data.local.RecentContactManager
 import com.teto.planner.data.remote.dto.UsersPageDto
 import com.teto.planner.data.remote.dto.toDomain
 import com.teto.planner.data.remote.dto.user.UpdateUserRequest
@@ -21,10 +22,12 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType.Application.Json
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class UserRepositoryImpl @Inject constructor(
-    private val client: HttpClient
+    private val client: HttpClient,
+    private val recentContactManager: RecentContactManager
 ) : UserRepository {
 
     override suspend fun getMe(): Result<UserMe> = runCatching {
@@ -73,5 +76,13 @@ class UserRepositoryImpl @Inject constructor(
             items = response.items.map { it.toDomain() },
             meta = response.meta?.toDomain() ?: PageMeta(page, size, 0)
         )
+    }
+
+    override fun getRecentUsers(): Flow<List<UserSummary>> {
+        return recentContactManager.recentUsers
+    }
+
+    override suspend fun saveRecentUsers(users: List<UserSummary>) {
+        recentContactManager.addRecentUsers(users)
     }
 }

@@ -13,6 +13,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -33,6 +35,15 @@ class MeetingCreateViewModel @Inject constructor(
 
     init {
         loadUser()
+        observeRecentContacts()
+    }
+
+    private fun observeRecentContacts() {
+        userRepository.getRecentUsers()
+            .onEach { recentList ->
+                updateSuccessState { it.copy(recentUsers = recentList) }
+            }
+            .launchIn(viewModelScope)
     }
 
     private fun loadUser() {
@@ -68,12 +79,14 @@ class MeetingCreateViewModel @Inject constructor(
         val userMeId = state.userMe?.id
 
         searchJob?.cancel()
+
+        if (query.isBlank()) {
+            updateSuccessState { it.copy(isSearching = false) }
+            return
+        }
+
         searchJob = viewModelScope.launch {
             delay(300)
-            if (query.isBlank()) {
-                updateSuccessState { it.copy(searchResults = emptyList(), isSearching = false) }
-                return@launch
-            }
 
             updateSuccessState { it.copy(isSearching = true) }
 
@@ -107,8 +120,9 @@ class MeetingCreateViewModel @Inject constructor(
         val userMeId = state.userMe?.id
 
         val nextPage = state.searchPage + 1
-
         val trimmedQuery = state.searchQuery.trim()
+
+        if (trimmedQuery.isEmpty()) return
 
         updateSuccessState { it.copy(isLoadingMoreUsers = true) }
 
@@ -254,6 +268,7 @@ class MeetingCreateViewModel @Inject constructor(
                 roomId = state.selectedRoomId,
                 participantIds = state.selectedParticipants.map { it.id }
             ).onSuccess {
+                userRepository.saveRecentUsers(state.selectedParticipants)
                 onSuccess()
             }.onFailure { error ->
                 updateSuccessState { it.copy(isSubmitting = false) }

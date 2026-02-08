@@ -13,6 +13,8 @@ sealed interface MeetingCreateUiState {
     data class Success(
         val searchQuery: String = "",
         val searchResults: List<UserSummary> = emptyList(),
+        val recentUsers: List<UserSummary> = emptyList(),
+
         val searchMeta: PageMeta? = null,
         val searchPage: Int = 0,
         val isSearching: Boolean = false,
