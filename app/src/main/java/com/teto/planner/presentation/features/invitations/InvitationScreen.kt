@@ -55,6 +55,7 @@ fun InvitationScreen(
     InvitationContent(
         uiState = uiState,
         onProfileClick = onProfileClick,
+        onRefresh = { viewModel.loadInvitations() },
         onResponse = { invitation, accepted ->
             viewModel.onInvitationResponse(invitation, accepted)
         }
@@ -66,6 +67,7 @@ fun InvitationScreen(
 fun InvitationContent(
     uiState: InvitationUiState,
     onProfileClick: () -> Unit,
+    onRefresh: () -> Unit,
     onResponse: (Invitation, Boolean) -> Unit
 ) {
     Scaffold(
@@ -84,6 +86,15 @@ fun InvitationContent(
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onRefresh,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
+                Icon(imageVector = Icons.Default.Refresh, contentDescription = "Обновить")
+            }
         }
     ) { innerPadding ->
         Surface(
@@ -388,7 +399,8 @@ fun InvitationScreenPreview() {
         InvitationContent(
             uiState = InvitationUiState.Empty,
             onProfileClick = {},
-            onResponse = { _, _ -> }
+            onResponse = { _, _ -> },
+            onRefresh = {}
         )
     }
 }
