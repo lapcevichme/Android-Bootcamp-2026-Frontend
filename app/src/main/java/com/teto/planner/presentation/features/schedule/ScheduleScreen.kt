@@ -28,10 +28,12 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -46,7 +48,6 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-// todo бахнуть сюда Pull to refresh, надеюсь будет удобно
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleScreen(
@@ -68,6 +69,9 @@ fun ScheduleScreen(
                     )
                 },
                 actions = {
+                    IconButton(onClick = { viewModel.refresh() }) {
+                        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Обновить")
+                    }
                     IconButton(onClick = onProfileClick) {
                         Icon(imageVector = Icons.Default.Person, contentDescription = "Профиль")
                     }
@@ -101,12 +105,19 @@ fun ScheduleScreen(
                 }
 
                 is ScheduleUiState.Success -> {
-                    ScheduleContent(
-                        state = state,
-                        dateFormatter = dateFormatter,
-                        onDateSelected = { viewModel.onDateSelected(it) },
-                        onMeetingClick = { meeting -> viewModel.openMeetingDetails(meeting) }
-                    )
+                    PullToRefreshBox(
+                        isRefreshing = state.isRefreshing,
+                        onRefresh = { viewModel.refresh() },
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        ScheduleContent(
+                            state = state,
+                            dateFormatter = dateFormatter,
+                            onDateSelected = { viewModel.onDateSelected(it) },
+                            onMonthChanged = { viewModel.loadMeetingsForMonth(it) },
+                            onMeetingClick = { meeting -> viewModel.openMeetingDetails(meeting) }
+                        )
+                    }
 
                     state.selectedMeeting?.let { meeting ->
                         MeetingDetailsDialog(
@@ -127,13 +138,19 @@ private fun ScheduleContent(
     state: ScheduleUiState.Success,
     dateFormatter: DateTimeFormatter,
     onDateSelected: (LocalDate) -> Unit,
+    onMonthChanged: (LocalDate) -> Unit,
     onMeetingClick: (Meeting) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
+        if (state.isLoading) {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        }
+
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth()) {
             SharedCalendar(
                 selectedDate = state.selectedDate,
                 onDateSelected = onDateSelected,
+                onMonthChanged = onMonthChanged,
                 meetingsByDate = state.meetingsByDate
             )
         }

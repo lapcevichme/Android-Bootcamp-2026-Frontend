@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.YearMonth
 import javax.inject.Inject
 
 @HiltViewModel
@@ -19,6 +20,8 @@ class ScheduleViewModel @Inject constructor(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<ScheduleUiState>(ScheduleUiState.Loading)
     val uiState: StateFlow<ScheduleUiState> = _uiState.asStateFlow()
+
+    private val loadedMonths = mutableSetOf<YearMonth>()
 
     init {
         loadInitialData()
@@ -35,30 +38,89 @@ class ScheduleViewModel @Inject constructor(
         }
     }
 
-    fun loadMeetingsForMonth(date: LocalDate) {
+    fun refresh() {
+        val currentState = uiState.value
+        if (currentState is ScheduleUiState.Success) {
+            val monthToRefresh = YearMonth.from(currentState.selectedDate)
+            loadedMonths.remove(monthToRefresh)
+
+            loadMeetingsForMonth(currentState.selectedDate, isPullToRefresh = true)
+        } else {
+            loadInitialData()
+        }
+    }
+
+    fun loadMeetingsForMonth(date: LocalDate, isPullToRefresh: Boolean = false) {
+        val monthToLoad = YearMonth.from(date)
+
+        if (!isPullToRefresh && loadedMonths.contains(monthToLoad)) {
+            return
+        }
+
         viewModelScope.launch {
             val currentState = uiState.value
-            val currentDate = (currentState as? ScheduleUiState.Success)?.selectedDate ?: date
 
-            if (currentState !is ScheduleUiState.Success) {
-                _uiState.update { ScheduleUiState.Loading }
-            }
-
-            val result = repository.getMeetings(
-                startDate = date.withDayOfMonth(1),
-                endDate = date.withDayOfMonth(date.lengthOfMonth())
-            )
-
-            result.onSuccess { pagedList ->
+            val currentMeetings = if (currentState is ScheduleUiState.Success) {
                 _uiState.update {
-                    ScheduleUiState.Success(
-                        meetings = pagedList.items,
-                        selectedDate = currentDate
+                    currentState.copy(
+                        isRefreshing = isPullToRefresh,
+                        isLoading = !isPullToRefresh
                     )
                 }
-            }.onFailure { error ->
+                currentState.meetings
+            } else {
+                _uiState.update { ScheduleUiState.Loading }
+                emptyList()
+            }
+
+            val currentDate = (currentState as? ScheduleUiState.Success)?.selectedDate ?: date
+            val newMeetings = mutableListOf<Meeting>()
+            var currentPage = 0
+            var hasNextPage = true
+            var errorOccurred: String? = null
+            val pageSize = 50
+
+            val startDate = date.withDayOfMonth(1)
+            val endDate = date.withDayOfMonth(date.lengthOfMonth())
+
+            while (hasNextPage) {
+                val result = repository.getMeetings(
+                    startDate = startDate,
+                    endDate = endDate,
+                    page = currentPage,
+                    size = pageSize
+                )
+
+                result.onSuccess { pagedList ->
+                    newMeetings.addAll(pagedList.items)
+                    hasNextPage = pagedList.meta.hasNext
+                    currentPage++
+                }.onFailure { error ->
+                    hasNextPage = false
+                    errorOccurred = error.message
+                }
+
+                if (currentPage > 20) hasNextPage = false
+            }
+
+            if (errorOccurred != null && currentMeetings.isEmpty() && newMeetings.isEmpty()) {
                 _uiState.update {
-                    ScheduleUiState.Error(error.message ?: "Неизвестная ошибка")
+                    ScheduleUiState.Error(errorOccurred)
+                }
+            } else {
+                if (errorOccurred == null) {
+                    loadedMonths.add(monthToLoad)
+                }
+
+                val updatedList = (newMeetings + currentMeetings).distinctBy { it.id }
+
+                _uiState.update {
+                    ScheduleUiState.Success(
+                        meetings = updatedList,
+                        selectedDate = currentDate,
+                        isLoading = false,
+                        isRefreshing = false
+                    )
                 }
             }
         }

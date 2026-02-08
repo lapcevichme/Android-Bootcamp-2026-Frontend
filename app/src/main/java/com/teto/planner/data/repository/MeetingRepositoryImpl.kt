@@ -36,17 +36,21 @@ class MeetingRepositoryImpl @Inject constructor(
     override suspend fun getMeetings(
         startDate: LocalDate,
         endDate: LocalDate,
-        includePending: Boolean
+        includePending: Boolean,
+        page: Int,
+        size: Int
     ): Result<PagedList<Meeting>> = runCatching {
         val response = client.get("api/meetings") {
             parameter("startDate", startDate.toString())
             parameter("endDate", endDate.toString())
             parameter("includePending", includePending)
+            parameter("page", page)
+            parameter("size", size)
         }.body<MeetingsPageDto>()
 
         PagedList(
             items = response.items.map { it.toDomain() },
-            meta = response.meta?.toDomain() ?: PageMeta(0, 50, response.items.size.toLong())
+            meta = response.meta?.toDomain() ?: PageMeta(0, size, response.items.size.toLong())
         )
     }
 
